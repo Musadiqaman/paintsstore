@@ -233,7 +233,8 @@ function addSaleEntry() {
   const saleID = generateSaleID(item);
 
   // 💰 Calculate total
-  const total = qtySold * rateVal;
+  const total = Math.round((qtySold * rateVal + Number.EPSILON) * 100) / 100;
+
 
   // 📝 Push new sale into temp array
   tempSales.push({

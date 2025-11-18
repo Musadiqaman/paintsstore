@@ -5,7 +5,7 @@
   <title>Add New Product</title>
   <link rel="icon" href="/images/weldon-paints-logo.png" type="image/png">
   <link rel="stylesheet" href="/stylesheets/addProduct.css">
-  
+ 
 </head>
 <body>
   <h1>Add New Products</h1>
@@ -66,6 +66,7 @@
 
 
 <script>
+
 
 // ====================== BRAND-WISE ITEMS =========================
 
@@ -338,6 +339,8 @@ const productOptions = {
   ]
 };
 
+
+
 // =================== BRAND CHANGE HANDLER ========================
 
 document.getElementById("brandName").addEventListener("change", function () {
@@ -414,7 +417,8 @@ function addProduct() {
   const colourDropdown = document.getElementById("colourCode");
   const qty = document.getElementById("quantitative").value;
   const totalProduct = parseInt(document.getElementById("totalProduct").value);
-  const rate = parseInt(document.getElementById("rate").value);
+  const rate = parseFloat(document.getElementById("rate").value);
+  
 
   let colourCombined = "";
   if (!colourDropdown.disabled && colourDropdown.value !== "") {
