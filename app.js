@@ -74,7 +74,7 @@ app.use(cors({
 
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
+  if (!allowedOrigins.includes(origin)) {
     next();
   } else {
     res.status(403).send({ success: false, message: "❌ Forbidden: Origin not allowed" });
