@@ -61,7 +61,7 @@ app.use(
 );
 
 // =======================================================
-// 🛡 SECURITY LAYER 3 → CORS (Local + Vercel ready)
+// 🛡 SECURITY LAYER 3 → CORS+ORIGIN (Local + Vercel ready)
 // =======================================================
 const allowedOrigins = process.env.NODE_ENV === "production"
   ? ["https://paintsstore.vercel.app"]  
