@@ -78,7 +78,7 @@ app.use((req, res, next) => {
   if (!origin || allowedOrigins.includes(origin)) {
     next();
   } else {
-    res.status(403).send("❌ Forbidden");
+    return res.status(403).json({ success: false, message: "❌ Forbidden: Origin not allowed" });
   }
 });
 
