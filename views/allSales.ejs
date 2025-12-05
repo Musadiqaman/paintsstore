@@ -14,80 +14,70 @@
 <h1>All Sales</h1>
 
 <form class="filter-container" method="GET" action="/sales/all">
-  <select name="filter" id="filter" onchange="toggleDateInputs(this.value)">
-    <option value="all" <%= filter === 'all' ? 'selected' : '' %>>All Dates</option>
-    <option value="today" <%= filter === 'today' ? 'selected' : '' %>>Today</option>
-    <option value="yesterday" <%= filter === 'yesterday' ? 'selected' : '' %>>Yesterday</option>
-    <option value="month" <%= filter === 'month' ? 'selected' : '' %>>This Month</option>
-    <option value="lastMonth" <%= filter === 'lastMonth' ? 'selected' : '' %>>Last Month</option>
-    <option value="custom" <%= filter === 'custom' ? 'selected' : '' %>>Custom Range</option>
+  <select name="filter" id="filter" data-value="<%= filter || 'all' %>">
+    <option value="all">All Dates</option>
+    <option value="today">Today</option>
+    <option value="yesterday">Yesterday</option>
+    <option value="month">This Month</option>
+    <option value="lastMonth">Last Month</option>
+    <option value="custom">Custom Range</option>
   </select>
 
-  <!-- Brand Filter -->
-  <select name="brand" id="brandFilter">
-    <option value="all" <%= selectedBrand === 'all' ? 'selected' : '' %>>All Brands</option>
-    <option value="Weldon Paints" <%= selectedBrand === 'Weldon Paints' ? 'selected' : '' %>>Weldon Paints</option>
-    <option value="Sparco Paints" <%= selectedBrand === 'Sparco Paints' ? 'selected' : '' %>>Sparco Paints</option>
-    <option value="Value Paints" <%= selectedBrand === 'Value Paints' ? 'selected' : '' %>>Value Paints</option>
-    <option value="Lorona Paints" <%= selectedBrand === 'Lorona Paints' ? 'selected' : '' %>>Lorona Paints</option>
-    <option value="Other Paints" <%= selectedBrand === 'Other Paints' ? 'selected' : '' %>>Other Paints</option>
+  <select name="brand" id="brandFilter" data-value="<%= selectedBrand || 'all' %>">
+    <option value="all">All Brands</option>
+    <option value="Weldon Paints">Weldon Paints</option>
+    <option value="Sparco Paints">Sparco Paints</option>
+    <option value="Value Paints">Value Paints</option>
+    <option value="Corona Paints">Corona Paints</option>
+    <option value="Other Paints">Other Paints</option>
   </select>
 
-  <!-- Item Filter -->
-  <select name="itemName" id="itemNameFilter">
+  <select name="itemName" id="itemNameFilter" data-value="<%= selectedItem || 'all' %>">
     <option value="all">All Items</option>
   </select>
 
-  <!-- Colour Filter -->
-  <select name="colourName" id="colourNameFilter">
+  <select name="colourName" id="colourNameFilter" data-value="<%= selectedColour || 'all' %>">
     <option value="all">All Colours</option>
   </select>
 
-  <!-- Unit Filter -->
-  <select name="unit" id="unitFilter">
+  <select name="unit" id="unitFilter" data-value="<%= selectedUnit || 'all' %>">
     <option value="all">All Units</option>
   </select>
 
-  <!-- Refund Filter -->
-  <select name="refund" id="refundFilter">
-    <option value="all" <%= selectedRefund === 'all' ? 'selected' : '' %>>All Status</option>
-    <option value="none" <%= selectedRefund === 'none' ? 'selected' : '' %>>Not Refunded</option>
-    <option value="Partially Refunded" <%= selectedRefund === 'Partially Refunded' ? 'selected' : '' %>>Partially Refunded</option>
-    <option value="Fully Refunded" <%= selectedRefund === 'Fully Refunded' ? 'selected' : '' %>>Fully Refunded</option>
+  <select name="refund" id="refundFilter" data-value="<%= selectedRefund || 'all' %>">
+    <option value="all">All Status</option>
+    <option value="none">Not Refunded</option>
+    <option value="Partially Refunded">Partially Refunded</option>
+    <option value="Fully Refunded">Fully Refunded</option>
   </select>
 
   <input type="date" name="from" id="from" value="<%= from || '' %>" style="display:none;">
   <input type="date" name="to" id="to" value="<%= to || '' %>" style="display:none;">
-  <button type="submit" id="apply">Apply</button>
 </form>
 
-
 <!-- Stats Display -->
-  <div class="stats">
-    <div class="stat-box">
-      <h3>Total Sold</h3>
-      <p><%= stats.totalSold || 0 %></p>
-    </div>
-    <div class="stat-box">
-      <h3>Total Sales</h3>
-      <p>Rs <%= stats.totalRevenue ? stats.totalRevenue.toFixed(2) : '0.00' %></p>
-    </div>
-   <div class="stat-box">
-  <h3>Total Profit</h3>
-  <p>Rs <%= stats.totalProfit ? stats.totalProfit.toFixed(2) : '0.00' %></p> <!-- Display total profit -->
-</div>
-<div class="stat-box">
-  <h3>Total Loss</h3>
-  <p id="total-loss">Rs <%= stats.totalLoss ? stats.totalLoss.toFixed(2) : '0.00' %></p> <!-- Display total loss -->
-</div>
-
-<div class="stat-box">
-  <h3>Refund Sales</h3>
-  <p id="refund-sales">Rs <%= stats.totalRefunded ? stats.totalRefunded.toFixed(2) : '0.00' %></p> 
-</div>
-
-
+<div class="stats">
+  <div class="stat-box">
+    <h3>Total Sold</h3>
+    <p><%= stats.totalSold || 0 %></p>
   </div>
+  <div class="stat-box">
+    <h3>Total Sales</h3>
+    <p>Rs <%= stats.totalRevenue ? stats.totalRevenue.toFixed(2) : '0.00' %></p>
+  </div>
+  <div class="stat-box">
+    <h3>Total Profit</h3>
+    <p>Rs <%= stats.totalProfit ? stats.totalProfit.toFixed(2) : '0.00' %></p>
+  </div>
+  <div class="stat-box">
+    <h3>Total Loss</h3>
+    <p id="total-loss">Rs <%= stats.totalLoss ? stats.totalLoss.toFixed(2) : '0.00' %></p>
+  </div>
+  <div class="stat-box">
+    <h3>Refund Sales</h3>
+    <p id="refund-sales">Rs <%= stats.totalRefunded ? stats.totalRefunded.toFixed(2) : '0.00' %></p>
+  </div>
+</div>
 
 <!-- Sales Table -->
 <table>
@@ -121,397 +111,19 @@
           <td>Rs <%= parseFloat(s.rate.toFixed(2)) %></td>
           <td>Rs <%= parseFloat((s.quantitySold * s.rate).toFixed(2)) %></td>
           <td class="<%= s.profit < 0 ? 'loss' : 'profit' %>">
-          Rs <%= parseFloat(s.profit.toFixed(2)) %>
+            Rs <%= parseFloat(s.profit.toFixed(2)) %>
           </td>
           <td class="refund-status"><%= s.refundStatus %></td>
           <td class="refund-quantity"><%= s.refundQuantity %></td>
           <td><%= new Date(s.createdAt).toLocaleDateString() %></td>
-          <td><button onclick="deleteSale('<%= s._id %>')" id="delete">Delete</button></td>
+          <td><button class="delete-sale" id="delete" data-id="<%= s._id %>">Delete</button></td>
         </tr>
       <% }) %>
     <% } %>
   </tbody>
 </table>
 
+<script src="/javascripts/allSales.js"></script>
 </main>
-<script>
-  const brandItems = {
-  "Weldon Paints": [
-    "Weather Shield", "Emulsion", "Enamel", "Betek Emulsion", "Betek Wall Putty",
-    "Wall Putty", "Metallic", "Under Coat", "Red Oxide Primer", "Varnish",
-    "ELFY Varnish", "Lacquer", "Sealer", "Fish", "Exterior Wall Putty",
-    "Exterior Primer", "Interior Primer", "Local Primer", "Godka Emulsion",
-    "Godka Wall Putty", "Local Enamel", "Thinir"
-  ],
-  "Sparco Paints": [
-    "Emulsion", "Wall Putty", "Dream Emulsion", "Weather Shield", "Enamel",
-    "Under Coad", "Red Oxide Primer", "Exterior Primer",
-    "Exterior Wall Putty", "Dream Wall Putty"
-  ],
-  "Value Paints": [
-    "Supreme Emulsion", "Supreme Wall Putty", "Prime Emulsion", "P.Weather Shield",
-    "Metallic", "Interior Primer", "Peak Wall Putty", "Peak Primer",
-    "Enamel", "Value Enamel", "Value Interior Primer", "Ext Primer",
-    "Value Weather Shield", "Value Prime Emulsion", "Primer Weather Shield",
-    "Value Under Coad", "Value Red Oxide Primer"
-  ],
-  "Lorona Paints": [
-    "Emulsion", "Primer", "Wall Putty", "Exterior Primer", "Enamel"
-  ],
-  "Other Paints": [
-    "PEARL PASTE 1000G", "PEARL PASTE 500G","PEARL PASTE 100G","MASKAN TAPE 2",
-    "MASKAN TAPE 1","MASKAN TAPE 1/2","MASKAN TAPE 2 SOTTER","MASKAN TAPE 1 SOTTER",
-    "BRUSH EMULSION 6","BRUSH EMULSION 5","BRUSH EMULSION 4","BRUSH TIGER PAINT 4",
-    "BRUSH TIGER PAINT 3","BRUSH TIGER PAINT 2 Double","BRUSH TIGER PAINT 2 Single",
-    "BRUSH TIGER PAINT 1 Double","BRUSH TIGER PAINT 3 Single","MARSHAL BRUSH 3",
-    "COMMANDER BURSH 2","CAPTAN BRUSH 4","CAPTAN BRUSH 3 Double","CAPTAN BRUSH 2 Double",
-    "CAPTAN BRUSH 2 Single","ROBINA QALAM","WHITE QALAM","CHAPA","BOADE CHAPA","BRUSH EMULSION 5 SINGLE",
-    "BRUSH EMULSION 5 SINGLE","CAPTAN BRUSH 3 SINGLE","MATTI OIL 1500G","MATTI OIL 1000G","MATTI OIL DAMIND",
-    "MATTI OIL 500G","MATTI OIL 300G","RAGMAL ADDID","RAGMAL ROLLE","RAGMAL KERMALA","COMMANDER ROLLER",
-    "SADA ROLLER","ROLA STAKE","ROLLER 4","ROLLA PUFF ADDID","BALCAK ROLLER","BLACAK ROLLA PUFF","NEEL PKT 100G",
-    "NEEL PKT 40G","NEEL","CHAK MATTI","PARIS","GLUE 1KG","GLUE 1/2 KG","GLUE DABBI","NOBLE GLUE","ACRYLIC 1 KG",
-    "ACRYLIC 1/2 KG","DIKOO SET","MITTI OIL SMALL","SAMAD BOND","OIL TUBE ADDID","CAHILLANGER ADDID",
-    "SPRAY MUBAH","SPRAY STEEL","SPRAY GOLDEN","SPRAY ZANG","MAGIC","SCRAPER 8","SCRAPER 4","SCRAPER SAFAYE",
-    "PATRA","TURKEY UMBER","YELLOW UMBER","R/O UMBER","BLACK UMBER","CHOONA","FARMKEA GANKE","MALMAL",
-  ]
-};
-
-  const brandUnits = {
-  "Weldon Paints": ["Gallons", "Quarters", "Drumi", "Dabbi"],
-  "Sparco Paints": ["Gallons", "Quarters", "Drumi", "Dabbi"],
-  "Value Paints":  ["Gallons", "Quarters", "Drumi", "Dabbi"],
-  "Lorona Paints": ["Gallons", "Quarters", "Drumi", "Dabbi", "Ponts"]
-};
-
-  const productOptions = {
-  "Weather Shield": [
-    { code: "1952", colour: "Off White" },
-    { code: "7030", colour: "Apricot" },
-    { code: "1948", colour: "Sugar Cane" },
-    { code: "7090", colour: "Pearl" },
-    { code: "7001", colour: "Soft White" },
-    { code: "2685", colour: "Cameo" },
-    { code: "2087", colour: "Beige" },
-    { code: "7051", colour: "Milk Mocha" },
-    { code: "7003", colour: "Peach Dream" },
-    { code: "7049", colour: "Desert Dawn" },
-    { code: "8310", colour: "Weldon Beige" },
-    { code: "1958", colour: "Tea Rose" },
-    { code: "7077", colour: "Golden Tinge" },
-    { code: "6860", colour: "Sweet Peach" },
-    { code: "8329", colour: "Hopsack" },
-    { code: "1960", colour: "Moon Land" },
-    { code: "5270", colour: "Fresh Orange" },
-    { code: "7048", colour: "Molten Bronze" },
-    { code: "2876", colour: "Tile Red" },
-    { code: "8317", colour: "Beaver" },
-    { code: "8323", colour: "Silk Stone" },
-    { code: "8328", colour: "Porcelain Peach" },
-    { code: "1919", colour: "Ash White" },
-    { code: "7034", colour: "Bubble Pink" },
-    { code: "7080", colour: "Sea Sand" },
-    { code: "7055", colour: "Royal Cameo" },
-    { code: "7004", colour: "Lilac Grey" },
-    { code: "7073", colour: "Barbie Pink" },
-    { code: "8303", colour: "New Ash White" },
-    { code: "7044", colour: "Evening Blush" },
-    { code: "3162", colour: "Weldon Grey" },
-    { code: "6846", colour: "Blue Grey" },
-    { code: "3148", colour: "Terracotta" },
-    { code: "1949", colour: "Sandstone" },
-    { code: "3160", colour: "Sky Grey" },
-    { code: "3158", colour: "Blue Wind" },
-    { code: "2910", colour: "Red Oxide" },
-    { code: "2877", colour: "Weldon Red" },
-    { code: "1959", colour: "Goose Wing" },
-    { code: "3032", colour: "Happy Blue" },
-    { code: "7072", colour: "Crystal Green" },
-    { code: "7082", colour: "Camel Brown (New)" },
-    { code: "2090", colour: "Jade" },
-    { code: "1947", colour: "Magnolia" },
-    { code: "1426", colour: "W.Cannon" },
-    { code: "7040", colour: "Cherry Pink" },
-    { code: "7017", colour: "Charcoal" },
-    { code: "8325", colour: "Royal Beige" },
-    { code: "3023", colour: "New Jade" },
-    { code: "7032", colour: "Brown Bronze" },
-    { code: "7054", colour: "Black Magic" },
-    { code: "2885", colour: "Autumn Stone" },
-    { code: "7042", colour: "Frost Mauve" },
-    { code: "8300", colour: "Black (New)" },
-    { code: "2728", colour: "Bright Red" },
-    { code: "7020", colour: "Habitat" },
-
-    { code: "2088", colour: "Avocado" },
-    { code: "7056", colour: "Expresso (New)" },
-    { code: "6853", colour: "Green Yellow" },
-
-  ],
-  "Emulsion": [
-  
-    { code: "10", colour: "Off White" },
-    { code: "43", colour: "Kitten White" },
-    { code: "97", colour: "Rose White" },
-    { code: "84", colour: "Peanut Butter" },
-    { code: "58", colour: "Light Orange" },
-    { code: "4026", colour: "New Off White" },
-    { code: "106", colour: "Purple Dawn" },
-    { code: "8", colour: "Cream" },
-    { code: "88", colour: "Cameo" },
-    { code: "94", colour: "Orange" },
-    { code: "103", colour: "Smart Off White (New)" },
-    { code: "46", colour: "Orchid White" },
-    { code: "40", colour: "Autumn Stone" },
-    { code: "93", colour: "Lemon" },
-    { code: "4006", colour: "New Tile Red" },
-    { code: "83", colour: "Texas Cream" },
-    { code: "110", colour: "Puff" },
-    { code: "41", colour: "Soft Beige" },
-    { code: "113", colour: "Dark Desert" },
-    { code: "70", colour: "Tile Red" },
-    { code: "78", colour: "Cockleshell" },
-    { code: "5", colour: "Pink" },
-    { code: "95", colour: "Opal Lilac" },
-    { code: "75", colour: "Stardust" },
-    { code: "104", colour: "Cool White (New)" },
-    { code: "71", colour: "Sandstone" },
-    { code: "21", colour: "Blossom Pink" },
-    { code: "112", colour: "Classical" },
-    { code: "22", colour: "Sea Blue" },
-    { code: "101", colour: "Swiss Grey (New)" },
-    { code: "23", colour: "Tea Rose" },
-    { code: "111", colour: "Dark Pink" },
-    { code: "74", colour: "Moods" },
-    { code: "109", colour: "Torres Blue" },
-    { code: "19", colour: "Ash White" },
-    { code: "89", colour: "Terracotta" },
-    { code: "49", colour: "Bright Pink" },
-    { code: "92", colour: "Violet" },
-    { code: "25", colour: "Blue Heaven" },
-    { code: "47", colour: "Badami" },
-    { code: "6", colour: "Spice" },
-    { code: "105", colour: "Barble Pink" },
-    { code: "96", colour: "Bringal" },
-    { code: "91", colour: "Deep Blue" },
-    { code: "519", colour: "Weldon Ash White" },
-    { code: "01", colour: "Soft White" },
-    { code: "18", colour: "Grey Blue" },
-    { code: "50", colour: "Apple White" },
-    { code: "30", colour: "Crystal Green" },
-    { code: "44", colour: "Brown Tint" },
-    { code: "76", colour: "Lavender White" },
-    { code: "20", colour: "Whisper" },
-    { code: "26", colour: "Lime Fresh" },
-    { code: "27", colour: "Emerald" },
-    { code: "42", colour: "Almond" },
-    { code: "48", colour: "French Grey" },
-    { code: "34", colour: "Steel Grey" },
-    { code: "79", colour: "Lime Grapes" },
-    { code: "28", colour: "Apple Green" },
-    { code: "45", colour: "Toasted Almond" },
-
-
-  
-    { code: "102", colour: "Golf Green (New)" },
-    { code: "36", colour: "Spring Leaf" },
-    { code: "72", colour: "Jonquil" },
-    { code: "90", colour: "Jade" },
-
-
-
-  ],
-  "Enamel": [
-
-
-    { code: "222", colour: "Bone White" },
-    { code: "272", colour: "Apricot (New)" },
-    { code: "4022", colour: "Lemon" },
-    { code: "203", colour: "Golden Brown" },
-    { code: "228", colour: "Red Oxide" },
-    { code: "210", colour: "Sky Blue" },
-    { code: "207", colour: "Off White" },
-    { code: "259", colour: "Honey Milk" },
-    { code: "209", colour: "Pearl Beige" },
-    { code: "204", colour: "Dark Brown" },
-    { code: "271", colour: "Polish Brown" },
-    { code: "214", colour: "Light Blue" },
-    { code: "206", colour: "New Off White" },
-    { code: "260", colour: "Sweet Peach" },
-    { code: "233", colour: "Weldon Beige" },
-    { code: "270", colour: "Royal Brown" },
-    { code: "266", colour: "Crimson" },
-    { code: "263", colour: "Corn Flower" },
-    { code: "235", colour: "Kitten White" },
-    { code: "253", colour: "Golden Yellow" },
-    { code: "298", colour: "Cappuccino" },
-    { code: "256", colour: "Chocolate Brown" },
-    { code: "215", colour: "New Brown" },
-    { code: "230", colour: "Vivid Blue" },
-    { code: "201", colour: "County Cream" },
-    { code: "255", colour: "Diyar" },
-    { code: "234", colour: "Coriander" },
-    { code: "237", colour: "Leather Brown" },
-    { code: "205", colour: "Signal Red" },
-    { code: "231", colour: "Middle Blue" },
-    { code: "257", colour: "Early Dawn" },
-    { code: "333", colour: "Light Diyar" },
-    { code: "261", colour: "Desert Dawn" },
-    { code: "273", colour: "Red Brick (New)" },
-    { code: "264", colour: "Hot Pink" },
-    { code: "220", colour: "Pearl Pink" },
-    { code: "217", colour: "Sea Green" },
-    { code: "297", colour: "Antelope" },
-    { code: "213", colour: "Mauve" },
-    { code: "229", colour: "Emerald" },
-    { code: "268", colour: "Light Champagne" },
-    { code: "254", colour: "Lilac" },
-    { code: "267", colour: "Spring Green" },
-    { code: "492", colour: "Smoke Grey" },
-    { code: "269", colour: "New Ash White" },
-    { code: "247", colour: "Weldon Green" },
-    { code: "495", colour: "New Smoke Grey" },
-    { code: "251", colour: "Ash White" },
-    { code: "216", colour: "Ocean Turuoise" },
-    { code: "212", colour: "Court Grey" },
-    { code: "219", colour: "Ash Grey" },
-    { code: "218", colour: "Signal Green" },
-    { code: "211", colour: "Antique Grey" },
-    { code: "252", colour: "Pumice" },
-    { code: "265", colour: "Orange" },
-    { code: "223", colour: "Dark Grey" },
-
-
-    { code: "5112", colour: "Ferozee" },
-    { code: "5113", colour: "Bronze" },
-    { code: "5115", colour: "Weldon Copper" },
-    { code: "5104", colour: "Shiny Green" },
-    { code: "5114", colour: "Red Rose" },
-    { code: "5105", colour: "Champagne" },
-    { code: "5103", colour: "Brown Sheen" },
-    { code: "5106", colour: "Copper" },
-    { code: "5102", colour: "Sparking Silver" },
-    { code: "0401", colour: "Pale Green" },
-    { code: "5107", colour: "Golden Dust" },
-    { code: "5120", colour: "Sea Blue" },
-    { code: "5109", colour: "Brilliant Green" },
-    
-
-  ]
-};
-
-
-
-const selectedBrand = "<%= selectedBrand || 'all' %>";
-const selectedItem = "<%= selectedItem || 'all' %>";
-const selectedColour = "<%= selectedColour || 'all' %>";
-const selectedUnit = "<%= selectedUnit || 'all' %>";
-
-const brandFilter = document.getElementById('brandFilter');
-const itemFilter = document.getElementById('itemNameFilter');
-const colourFilter = document.getElementById('colourNameFilter');
-const unitFilter = document.getElementById('unitFilter');
-const refundFilter = document.getElementById('refundFilter');
-
-function populateItemFilter(brand) {
-  itemFilter.innerHTML = '<option value="all">All Items</option>';
-  if (!brand || brand === 'all') { itemFilter.disabled = true; return; }
-  itemFilter.disabled = false;
-  (brandItems[brand] || []).forEach(it => {
-    const o = document.createElement('option'); o.value = it; o.textContent = it;
-    if (selectedItem === it) o.selected = true;
-    itemFilter.appendChild(o);
-  });
-  const oOther = document.createElement('option'); oOther.value = 'Other'; oOther.textContent = 'Other';
-  if (selectedItem === 'Other') oOther.selected = true;
-  itemFilter.appendChild(oOther);
-}
-
-function populateUnitFilter(brand) {
-  unitFilter.innerHTML = '<option value="all">All Units</option>';
-  if (!brand || brand === 'all') { unitFilter.disabled = true; return; }
-  (brandUnits[brand] || []).forEach(u => {
-    const o = document.createElement('option'); o.value = u; o.textContent = u;
-    if (selectedUnit === u) o.selected = true;
-    unitFilter.appendChild(o);
-  });
-  unitFilter.disabled = false;
-}
-
-function populateColourFilter(brand, item) {
-  colourFilter.innerHTML = '<option value="all">All Colours</option>';
-  if (brand === 'Weldon Paints' && productOptions[item]) {
-    productOptions[item].forEach(c => {
-      const o = document.createElement('option'); o.value = c.colour; o.textContent = c.colour;
-      if (selectedColour === c.colour) o.selected = true;
-      colourFilter.appendChild(o);
-    });
-    colourFilter.disabled = false;
-  } else {
-    colourFilter.disabled = true;
-    if (selectedColour && selectedColour !== 'all') {
-      const o = document.createElement('option'); o.value = selectedColour; o.textContent = selectedColour; o.selected = true;
-      colourFilter.appendChild(o);
-    }
-  }
-}
-
-
-function toggleDateInputs(value) {
-  const from = document.getElementById("from");
-  const to = document.getElementById("to");
-  if (value === "custom") { from.style.display = "inline-block"; to.style.display = "inline-block"; }
-  else { from.style.display = "none"; to.style.display = "none"; }
-}
-
-
-// Event Listeners
-brandFilter.addEventListener('change', () => { populateItemFilter(brandFilter.value); populateUnitFilter(brandFilter.value); populateColourFilter(brandFilter.value, itemFilter.value); if (brandFilter.dataset.initialized) brandFilter.form.submit(); });
-itemFilter.addEventListener('change', () => { populateColourFilter(brandFilter.value, itemFilter.value); if (itemFilter.dataset.initialized) itemFilter.form.submit(); });
-[unitFilter, colourFilter, refundFilter].forEach(f => f.addEventListener('change', () => { if (f.dataset.initialized) f.form.submit(); }));
-
-window.addEventListener('DOMContentLoaded', () => {
-  populateItemFilter(selectedBrand === 'all' ? 'all' : selectedBrand);
-  populateUnitFilter(selectedBrand === 'all' ? null : selectedBrand);
-  populateColourFilter(selectedBrand, selectedItem === 'all' ? '' : selectedItem);
-
-  if (selectedBrand && selectedBrand !== 'all') brandFilter.value = selectedBrand;
-  if (selectedItem && selectedItem !== 'all') itemFilter.value = selectedItem;
-  if (selectedUnit && selectedUnit !== 'all') unitFilter.value = selectedUnit;
-  if (selectedColour && selectedColour !== 'all' && colourFilter.querySelector(`option[value="${selectedColour}"]`)) colourFilter.value = selectedColour;
-
-  [brandFilter, itemFilter, unitFilter, colourFilter, refundFilter].forEach(s => s.dataset.initialized = true);
-  toggleDateInputs("<%= filter || 'all' %>");
-});
-
-async function deleteSale(saleId) {
-  if (!confirm("Are you sure you want to delete this sale?")) return;
-
-  try {
-    const res = await fetch(`/sales/delete-sale/${saleId}`, { method: "DELETE" });
-
-    // Try to parse JSON
-    let data;
-    try {
-      data = await res.json();
-    } catch (err) {
-      // If response is not JSON (e.g., middleware sent plain text)
-      const text = await res.text();
-      alert(text); // show "Access denied: You do not have permission" from middleware
-      return;
-    }
-
-    if (data.success) {
-      alert("Sale deleted successfully!");
-      location.reload();
-    } else {
-      alert(data.message || "Failed to delete sale");
-    }
-
-  } catch (err) {
-    alert("Error deleting sale");
-  }
-}
-
-</script>
 </body>
 </html>

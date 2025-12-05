@@ -1,90 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Weldon Paints Sidebar</title>
-
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    ::-webkit-scrollbar { width: 5px; }
-    ::-webkit-scrollbar-thumb { background-color: #06A56C; }
-    ::-webkit-scrollbar-track { background-color: #f1f1f1; }
-
-    body { font-family: 'Segoe UI', sans-serif; background: #f6f7fb; }
-
-    /* Sidebar */
-    .sidebar {
-      width: 200px;
-      height: 100vh;
-      background: #ffffff;
-      position: fixed;
-      padding: 25px 22px;
-      border-right: 1px solid #e9ecef;
-      box-shadow: 0 0 25px rgba(0,0,0,0.05);
-      overflow-y: auto;
-    }
-
-    .logo { text-align: center; margin-bottom: 30px; }
-    .logo img { width: 60px; border-radius: 12px; }
-    .logo h3 { margin-top: 10px; font-size: 19px; color: #06A56C; font-weight: 600; }
-
-    ul { list-style: none; padding-left: 0; }
-
-    .dropdown {
-      padding: 14px 16px;
-      font-size: 15px;
-      border-radius: 10px;
-      background: #fff;
-      color: #374151;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      cursor: pointer;
-      transition: 0.25s;
-      border: 1px solid transparent;
-    }
-
-    .dropdown:hover { background: #f3f4f6; border-color: #e5e7eb; }
-    .menu-left { display: flex; align-items: center; gap: 10px; flex: 1; }
-
-    .arrow { transition: 0.25s ease; opacity: 0.6; }
-
-    .submenu {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.3s ease, padding 0.3s;
-      background: #f9fafb;
-      border-radius: 10px;
-      margin: 4px 0 14px 0;
-      padding-left: 12px;
-      border-left: 3px solid #06A56C;
-    }
-
-    .submenu.open { max-height: 260px; padding: 10px 0 14px 12px; }
-    .submenu li { padding: 10px 12px; font-size: 13px; border-radius: 8px; margin-bottom: 6px; color: #09A66E; }
-    .submenu li:hover { background: #ffffff; color: #106beb; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
-
-    a { color: inherit; text-decoration: none; display: block; width: 100%; }
-
-    .logout {
-      margin-top: 40px;
-      padding: 14px 16px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      cursor: pointer;
-      color: #374151;
-      transition: 0.3s;
-      border: 1px solid transparent;
-      font-size: 17px;
-    }
-
-    .logout:hover { background: #f3f4f6; border-color: #e5e7eb; }
-    main { margin-left: 200px; padding: 10px; }
-  </style>
+<link rel="stylesheet" href="/stylesheets/navbar.css">
 </head>
 <body>
 
@@ -145,23 +62,9 @@
     </ul>
   </div>
 
-  <!-- <main></main> -->
+  
 
-  <script>
-    // Submenu toggle
-    document.querySelectorAll(".menu-group").forEach(group => {
-      const dropdown = group.querySelector(".dropdown");
-      const submenu = group.querySelector(".submenu");
-      const arrow = group.querySelector(".arrow");
-
-      dropdown.addEventListener("click", () => {
-        document.querySelectorAll(".submenu").forEach(s => { if (s !== submenu) s.classList.remove("open"); });
-        document.querySelectorAll(".arrow").forEach(a => { if (a !== arrow) a.textContent = '▶'; });
-        submenu.classList.toggle("open");
-        arrow.textContent = submenu.classList.contains("open") ? '▼' : '▶';
-      });
-    });
-  </script>
+<script src="/javascripts/navbar.js"></script>
 
 </body>
 </html>

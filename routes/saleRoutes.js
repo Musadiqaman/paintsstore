@@ -166,7 +166,7 @@ router.get("/all",isLoggedIn,allowRoles("admin"), async (req, res) => {
       if (brand === "Weldon Paints") query.brandName = /weldon/i;
       else if (brand === "Sparco Paints") query.brandName = /sparco/i;
       else if (brand === "Value Paints") query.brandName = /value/i;
-      else if (brand === "Lorona Paints") query.brandName = /lorona/i;
+      else if (brand === "Corona Paints") query.brandName = /Corona/i;
       else if (brand === "Other Paints") query.brandName = /Other Paints|Other/i;
     }
 

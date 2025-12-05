@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="/stylesheets/printProducts.css">
 </head>
 
-<body onload="window.print()">
+<body>
   <!-- <h1>Product Entry Bill</h1> -->
    <h2> <img src="/images/weldon-paints-logo.png" id="logo"> <br> Hamza paints</h2>
   <p><b>Entry Date:</b> <%= currentDate %></p>
@@ -49,5 +49,7 @@
     <span>Total Items: <%= products.length %></span>
     <span>Total Amount: <%= totalAmount %></span>
   </div>
+
+<script src="/javascripts/printProducts.js"></script>
 </body>
 </html>

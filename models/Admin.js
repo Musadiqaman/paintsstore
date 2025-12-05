@@ -12,8 +12,17 @@ const adminSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ["admin", "worker"],  // ✔ allowed roles
-    required: true              // ✔ default nahi, user ko role dena hoga
+    enum: ["admin", "worker"],  // allowed roles
+    required: true
+  },
+  // ===== 2FA OTP FIELDS =====
+  otp: {
+    type: Number,       // 6-digit OTP
+    default: null
+  },
+  otpExpires: {
+    type: Date,         // OTP expiration time
+    default: null
   }
 }, { timestamps: true });
 

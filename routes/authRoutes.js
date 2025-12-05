@@ -5,6 +5,12 @@ import Admin from "../models/Admin.js";
 import { isLoggedIn } from "../middleware/isLoggedIn.js";
 import { isAlreadyLoggedIn } from "../middleware/isAlreadyLoggedIn.js";
 import { allowRoles } from "../middleware/allowRoles.js";
+import { checkIPBlocked } from "../middleware/checkIPBlocked.js";
+import { ensure2FA } from "../middleware/ensure2FA.js";
+import rateLimit from "express-rate-limit";
+import BlockedIP from "../models/BlockedIP.js";
+import nodemailer from "nodemailer";
+
 
 
 const router = express.Router();
@@ -143,8 +149,29 @@ router.get("/create-worker", async (req, res) => {
 
 
 
+
+const loginLimiter = rateLimit({
+  windowMs: 2 * 60 * 1000, // 2 minute
+  max: 5,
+  handler: async (req, res) => {
+    const ip = req.ip;
+
+    console.log("⚠️ Blocking IP permanently:", ip);
+
+    await BlockedIP.create({ ip });
+
+    return res.status(429).json({
+      success: false,
+      message: "Too many attempts! Your IP is permanently blocked."
+    });
+  }
+});
+
+
+
+
 // LOGIN POST
-router.post("/login",isAlreadyLoggedIn, async (req, res) => {
+router.post("/login", checkIPBlocked, loginLimiter, isAlreadyLoggedIn, async (req, res) => {
   try {
     const { username, password } = req.body;
 
@@ -152,38 +179,60 @@ router.post("/login",isAlreadyLoggedIn, async (req, res) => {
       return res.status(400).json({ success: false, message: "All fields are required!" });
     }
 
-    // find user (admin or worker)
     const user = await Admin.findOne({ username });
     if (!user) {
       return res.status(401).json({ success: false, message: "Username or password is wrong!" });
     }
 
-    // check password
     const match = await bcrypt.compare(password, user.password);
     if (!match) {
       return res.status(401).json({ success: false, message: "Username or password is wrong!" });
     }
 
-    // create token WITH ROLE
-    const token = jwt.sign(
-      { 
-        id: user._id,
-        username: user.username,
-        role: user.role     // ✔ ADDED
-      },
-      process.env.SECRET_KEY,
-      { expiresIn: "1d" }
-    );
+    // ===== GENERATE OTP =====
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    user.otp = otp;
+    user.otpExpires = Date.now() + 5 * 60 * 1000; // 5 mins
+    await user.save();
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: false,
-      maxAge: 24 * 60 * 60 * 1000
+    // ✅ TEMPORARY SESSION FOR 2FA ACCESS
+    req.session.otpUserId = user._id;  // <-- yahi line OTP generate hone ke turant baad dalni hai
+
+    // ===== SELECT EMAIL ACCOUNT BASED ON ROLE =====
+    let emailUser, emailPass, sendTo;
+
+    if (user.role === "admin") {
+      emailUser = process.env.ADMIN_EMAIL_USER;
+      emailPass = process.env.ADMIN_EMAIL_PASS;
+      sendTo = process.env.ADMIN_RECEIVE_EMAIL; // jisko OTP milega
+    } else {
+      emailUser = process.env.WORKER_EMAIL_USER;
+      emailPass = process.env.WORKER_EMAIL_PASS;
+      sendTo = process.env.WORKER_RECEIVE_EMAIL;
+    }
+
+    // ===== CREATE TRANSPORTER =====
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: emailUser,
+        pass: emailPass
+      }
     });
 
+    // Send OTP
+    await transporter.sendMail({
+      from: `"Secure Login" <${emailUser}>`,
+      to: sendTo,
+      subject: "Your OTP Code",
+      text: `Hello ${user.username},\nYour OTP is: ${otp}\nIt expires in 5 minutes.`
+    });
+
+    // RESPONSE
     return res.json({
       success: true,
-      message: "Logged in successfully!"
+      message: "OTP sent successfully! Redirecting...",
+      redirect2FA: true
     });
 
   } catch (err) {
@@ -196,6 +245,83 @@ router.post("/login",isAlreadyLoggedIn, async (req, res) => {
 });
 
 
+
+
+router.get('/2FA',ensure2FA,(req,res)=>{
+res.render("2FA")
+});
+
+
+
+// VERIFY OTP
+router.post("/verify-otp",ensure2FA, async (req, res) => {
+  try {
+    const { otp } = req.body;
+    if (!otp) {
+      return res.status(400).json({ success: false, message: "OTP is required!" });
+    }
+
+    // Find user with matching OTP and valid expiry
+    const user = await Admin.findOne({
+      otp: otp,
+      otpExpires: { $gt: Date.now() } // OTP not expired
+    });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: "Invalid or expired OTP!" });
+    }
+
+    // OTP is correct → Clear OTP fields
+    user.otp = null;
+    user.otpExpires = null;
+    await user.save();
+   
+    // 🔥 Remove connect.sid cookie
+    req.session.destroy(err => {
+      if (err) console.error("Session destroy error:", err);
+    });
+
+    // 🔥 Remove connect.sid cookie
+    res.clearCookie("connect.sid");
+
+
+    // CREATE JWT TOKEN (session)
+    const token = jwt.sign(
+      { id: user._id, username: user.username, role: user.role },
+      process.env.SECRET_KEY,
+      { expiresIn: "1d" }
+    );
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 24 * 60 * 60 * 1000
+    });
+
+    return res.json({ success: true, message: "OTP verified successfully!" });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: "Server error. Try again!" });
+  }
+});
+
+
+
+// LOGOUT FROM 2FA PAGE
+router.post("/logout-2fa",ensure2FA,(req, res) => {
+  // Destroy session
+  req.session.destroy(err => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ success: false, message: "Could not log out!" });
+    }
+    // Clear connect.sid cookie
+    res.clearCookie("connect.sid");
+    return res.json({ success: true, message: "Logged out successfully!" });
+  });
+});
 
 
 
