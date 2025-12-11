@@ -1,4 +1,4 @@
 // Automatically trigger print when page loads
-window.addEventListener("DOMContentLoaded", () => {
-    window.print();
-});
+// window.addEventListener("DOMContentLoaded", () => {
+//     window.print();
+// });

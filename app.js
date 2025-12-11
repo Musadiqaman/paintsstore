@@ -135,6 +135,7 @@ app.use(session({
   }
 }));
 
+
 // =======================================================
 // ROUTES
 // =======================================================
@@ -145,10 +146,11 @@ app.use("/agents", agentRoutes);
 
 app.get("/", (req, res) => res.redirect("/auth/login"));
 
-app.get("/home", isLoggedIn, (req, res) => {
+app.get("/home", isLoggedIn,allowRoles("admin", "worker"), (req, res) => {
   const role = req.user.role;
   res.render("home", { role });
 });
+
 
 app.get("/navi-bar", isLoggedIn, allowRoles("admin", "worker"), (req, res) => {
   const role = req.user.role;

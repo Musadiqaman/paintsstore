@@ -4,7 +4,7 @@
   "main": "app.js",
   "type": "module",
   "scripts": {
-    "start": "node app.js",
+    "start": "cross-env TZ=Asia/Karachi node app.js",
     "dev": "nodemon app.js"
   },
   "dependencies": {
@@ -23,6 +23,7 @@
     "path": "^0.12.7"
   },
   "devDependencies": {
+    "cross-env": "^10.1.0",
     "nodemon": "^3.0.3"
   }
 }

@@ -56,6 +56,7 @@ const brandUnits = {
 
 const productOptions = {
   "Weather Shield": [
+    { code: "1951", colour: "White" },
     { code: "1952", colour: "Off White" },
     { code: "7030", colour: "Apricot" },
     { code: "1948", colour: "Sugar Cane" },
@@ -119,7 +120,7 @@ const productOptions = {
 
   ],
   "Emulsion": [
-  
+    { code: "0", colour: "White" },
     { code: "10", colour: "Off White" },
     { code: "43", colour: "Kitten White" },
     { code: "97", colour: "Rose White" },
@@ -192,8 +193,8 @@ const productOptions = {
 
   ],
   "Enamel": [
-
-
+    { code: "241", colour: "Black" },
+    { code: "0", colour: "White" },
     { code: "222", colour: "Bone White" },
     { code: "272", colour: "Apricot (New)" },
     { code: "4022", colour: "Lemon" },

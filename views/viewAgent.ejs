@@ -31,15 +31,15 @@
 <!-- Stats Section -->
 <div class="stats">
   <div class="stat-box">
-    <h3>Total % Amount</h3>
+    <h3>Total % Commission</h3>
     <p>Rs <%= stats.totalPercentageAmount.toFixed(2) %></p>
   </div>
   <div class="stat-box">
-    <h3>Total % Paid</h3>
+    <h3>Paid % Commission</h3>
     <p>Rs <%= stats.totalPercentageAmountGiven.toFixed(2) %></p>
   </div>
   <div class="stat-box">
-    <h3>Total % Left</h3>
+    <h3>Left % Commission</h3>
     <p>Rs <%= stats.totalPercentageAmountLeft.toFixed(2) %></p>
   </div>
 </div>
@@ -81,7 +81,7 @@
             <% } %>
           </td>
           <td>Rs <%= i.paidAmount %></td>
-          <td>Rs <%= i.percentageAmount - i.paidAmount %></td>
+          <td>Rs <%= (i.percentageAmount - i.paidAmount).toFixed(2) %></td>
           <td><%= new Date(i.createdAt).toLocaleDateString() %></td>
           <td class="actions">
             <button class="pay-btn"  id="pay" data-id="<%= i._id %>" data-total="<%= i.percentageAmount %>" data-paid="<%= i.paidAmount %>">Pay</button>
