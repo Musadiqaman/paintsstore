@@ -10,7 +10,7 @@
 <%- include('partials/navbar') %>
 
 <main>
-<h1>View Agent - <%= agent.name %></h1>
+<h1>View Agent - <span style="color: #2196F3;"><%= agent.name %></span></h1>
 
 <!-- Filter Section -->
 <form class="filter-container" method="GET" action="/agents/view-agent/<%= agent._id %>">
@@ -20,7 +20,7 @@
     <option value="yesterday" <%= filter === 'yesterday' ? 'selected' : '' %>>Yesterday</option>
     <option value="month" <%= filter === 'month' ? 'selected' : '' %>>This Month</option>
     <option value="lastMonth" <%= filter === 'lastMonth' ? 'selected' : '' %>>Last Month</option>
-    <option value="custom" <%= filter === 'custom' ? 'selected' : '' %>>Custom Range</option>
+    <option hidden value="custom" <%= filter === 'custom' ? 'selected' : '' %>>Custom Range</option>
   </select>
 
   <input type="date" name="from" id="from" value="<%= from || '' %>" style="display:none;">
