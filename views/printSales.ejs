@@ -5,7 +5,6 @@
   <title>Sale Entry bill</title>
   <link rel="icon" href="/images/weldon-paints-logo.png" type="image/png">
   <link rel="stylesheet" href="/stylesheets/printSales.css">
-
 </head>
 
 <body>
@@ -39,8 +38,8 @@
           <td><%= s.itemName %></td>
           <td><%= s.qty %></td>
           <td><%= s.quantitySold %></td>
-          <td>Rs <%= parseFloat(s.rate.toFixed(2)) %></td>
-          <td><%= total %></td>
+          <td>Rs <%= parseFloat(s.rate).toFixed(2) %></td>
+          <td>Rs <%= total.toFixed(2) %></td>
         </tr>
       <% }) %>
     </tbody>
@@ -48,12 +47,9 @@
 
   <div class="footer">
     <span>Total items: <%= sales.length %></span>
-    <span>Total amount: <%= totalAmount %></span>
+    <span>Total amount: Rs <%= totalAmount.toFixed(2) %></span>
   </div>
-
 
 <script src="/javascripts/printSales.js"></script> 
 </body>
 </html>
-
-

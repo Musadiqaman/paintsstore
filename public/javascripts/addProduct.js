@@ -404,19 +404,20 @@ function renderTable() {
     return;
   }
 
-  tempProducts.forEach((p, i) => {
-    tbody.innerHTML += `
-      <tr>
-        <td>${p.brandName}</td>
-        <td>${p.itemName}</td>
-        <td>${p.colourName}</td>
-        <td>${p.qty}</td>
-        <td>${p.totalProduct}</td>
-        <td>${p.rate}</td>
-        <td>${p.total}</td>
-        <td><button class="delete-temp" id="delete" data-index="${i}">Delete</button></td>
-      </tr>`;
-  });
+tempProducts.forEach((p, i) => {
+  tbody.innerHTML += `
+    <tr>
+      <td>${p.brandName}</td>
+      <td>${p.itemName}</td>
+      <td>${p.colourName}</td>
+      <td>${p.qty}</td>
+      <td>${p.totalProduct}</td>
+      <td>Rs ${parseFloat(p.rate).toFixed(2)}</td>
+      <td>Rs ${parseFloat(p.total).toFixed(2)}</td>
+      <td><button class="delete-temp" id="delete" data-index="${i}">Delete</button></td>
+    </tr>`;
+});
+
 
   attachDeleteButtons(); // VERY IMPORTANT
 }
