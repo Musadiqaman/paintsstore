@@ -301,9 +301,15 @@ router.get('/print',isLoggedIn,allowRoles("admin", "worker"), (req, res) => {
     }
   }
   const currentDate = new Date().toLocaleString('en-US', { 
-    weekday:'long', year:'numeric', month:'long', day:'numeric', 
-    hour:'2-digit', minute:'2-digit', second:'2-digit'
-  });
+  timeZone: 'Asia/Karachi',  // explicitly set Pakistan time
+  weekday: 'long', 
+  year: 'numeric', 
+  month: 'long', 
+  day: 'numeric', 
+  hour: '2-digit', 
+  minute: '2-digit', 
+  second: '2-digit'
+});
   res.render('printProducts', { products, currentDate });
 });
 
