@@ -349,27 +349,28 @@ function addSaleEntry() {
 }
 
 function renderTable() {
-  const tbody = document.getElementById("saleTableBody");
-  if (tempSales.length === 0) {
-    tbody.innerHTML = `<tr class="no-data"><td colspan="8">No sales added yet</td></tr>`;
-    return;
-  }
+  const tbody = document.getElementById("saleTableBody");
+  if (tempSales.length === 0) {
+    tbody.innerHTML = `<tr class="no-data"><td colspan="8">No sales added yet</td></tr>`;
+    return;
+  }
 
-  tbody.innerHTML = tempSales.map((p, i) => `
-    <tr>
-      <td>${p.brandName}</td>
-      <td>${p.itemName}</td>
-      <td>${p.colourName}</td>
-      <td>${p.qty}</td>
-      <td>${p.quantitySold}</td>
-      <td>${p.rate}</td>
-      <td>${p.total}</td>
-      <td><button id="delete" class="delete-sale" data-index="${i}">Delete</button></td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = tempSales.map((p, i) => `
+    <tr>
+      <td>${p.brandName}</td>
+      <td>${p.itemName}</td>
+      <td>${p.colourName}</td>
+      <td>${p.qty}</td>
+      <td>${p.quantitySold}</td>
+      <td>Rs ${parseFloat(p.rate).toFixed(2)}</td>
+      <td>Rs ${parseFloat(p.total).toFixed(2)}</td>
+      <td><button id="delete" class="delete-sale" data-index="${i}">Delete</button></td>
+    </tr>
+  `).join('');
 
-  attachDeleteButtons(); 
+  attachDeleteButtons(); 
 }
+
 
 // =====================
 // ATTACH DELETE BUTTONS (FIXED to refresh 3 levels)
