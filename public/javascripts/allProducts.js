@@ -358,12 +358,16 @@ function populateColourFilter(brand, item) {
 // query.colourName = new RegExp(`^${colourName}$`, "i");}
 
 function toggleDateInputs(value) {
+  const applyBtn = document.getElementById('apply'); // Button select kiya
+
   if (value === "custom") {
     fromDate.style.display = "inline-block";
     toDate.style.display = "inline-block";
+    applyBtn.style.display = "inline-block"; // Custom par button dikhao
   } else {
     fromDate.style.display = "none";
     toDate.style.display = "none";
+    applyBtn.style.display = "none"; // Baki sab par hide kar do
   }
 }
 
