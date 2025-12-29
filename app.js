@@ -60,13 +60,13 @@ app.use(
 );
 
 
-
 // =======================================================
 // 🛡 SECURITY LAYER 3 → CORS+ORIGIN (Local + Vercel ready)
 // =======================================================
 // Allowed origins
+
 const allowedOrigins = process.env.NODE_ENV === "production"
-  ? ["https://paintsstore.vercel.app"]   // Add your production domain(s) here
+  ? ["https://hamzapaints.vercel.app"]   // Add your production domain(s) here
   : ["http://localhost:3000"];           // Localhost for dev
 
 // ===== CORS Middleware =====
@@ -103,7 +103,6 @@ app.use((req, res, next) => {
 });
 
 
-
 // =======================================================
 // 🛡 SECURITY LAYER 4 → Trust proxy (for Vercel)
 // =======================================================
@@ -136,7 +135,6 @@ app.use(session({
   }
 }));
 
-
 // =======================================================
 // ROUTES
 // =======================================================
@@ -151,7 +149,6 @@ app.get("/home", isLoggedIn,allowRoles("admin", "worker"), (req, res) => {
   const role = req.user.role;
   res.render("home", { role });
 });
-
 
 app.get("/navi-bar", isLoggedIn, allowRoles("admin", "worker"), (req, res) => {
   const role = req.user.role;
