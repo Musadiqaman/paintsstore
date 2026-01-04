@@ -122,7 +122,6 @@ router.post("/add",isLoggedIn,allowRoles("admin", "worker"), async (req, res) =>
    🟢 3️⃣ All Sales Page (GET)
    ✅ Includes Total Stats
 ================================ */
-
 // PKT Time Zone Identifier
 const PKT_TIMEZONE = 'Asia/Karachi';
 
@@ -136,145 +135,111 @@ router.get("/all", isLoggedIn, allowRoles("admin"), async (req, res) => {
         let { filter, from, to, brand, itemName, colourName, unit, refund } = req.query;
         let query = {};
         let start, end;
-        let dateOperator = '$lte'; // Default: For 'today', 'month', etc.
 
-        // --- PKT AWARE Date Filters ---
+        // 🟢 PKT (Karachi) Time setting
         const nowPKT = moment().tz(PKT_TIMEZONE);
         
-        // 1. NON-CUSTOM FILTERS (Use $lte and endOf('day'))
-        if (filter === "today" || filter === "yesterday" || filter === "month" || filter === "lastMonth") {
-            
+        if (filter && filter !== "all") {
             if (filter === "today") {
                 start = nowPKT.clone().startOf('day').toDate();
                 end = nowPKT.clone().endOf('day').toDate();
             } else if (filter === "yesterday") {
-                const yesterdayPKT = nowPKT.clone().subtract(1, 'days');
-                start = yesterdayPKT.startOf('day').toDate();
-                end = yesterdayPKT.endOf('day').toDate();
+                const yesterday = nowPKT.clone().subtract(1, 'days');
+                start = yesterday.startOf('day').toDate();
+                end = yesterday.endOf('day').toDate();
             } else if (filter === "month") {
                 start = nowPKT.clone().startOf('month').toDate();
                 end = nowPKT.clone().endOf('day').toDate(); 
             } else if (filter === "lastMonth") {
-                const lastMonthPKT = nowPKT.clone().subtract(1, 'months');
-                start = lastMonthPKT.startOf('month').toDate();
-                end = lastMonthPKT.endOf('month').toDate();
+                const lastMonth = nowPKT.clone().subtract(1, 'months');
+                start = lastMonth.startOf('month').toDate();
+                end = lastMonth.endOf('month').toDate();
+            } else if (filter === "custom" && from && to) {
+                // Custom range mein 'to' date ke end tak data dikhane ke liye
+                start = moment.tz(from, PKT_TIMEZONE).startOf('day').toDate();
+                end = moment.tz(to, PKT_TIMEZONE).endOf('day').toDate();
             }
-        
-        // 2. CUSTOM FILTER (FINAL ROBUST $lt$ Logic - Fixed Mutability)
-        } else if (filter === "custom" && from && to) {
-            
-            dateOperator = '$lt'; // Operator changed to LESS THAN
-            
-            const f = moment.tz(from, 'YYYY-MM-DD', PKT_TIMEZONE);
-            
-            // Step 1: 'to' date ko sahi se parse karo
-            let t = moment.tz(to, 'YYYY-MM-DD', PKT_TIMEZONE);
 
-            // Step 2: Date ko ek din aage badhao (Mutation guaranteed)
-            // Ab t khud 15 Dec 2025 ban jayega
-            t.add(1, 'days').startOf('day'); 
-            
-            if (f.isValid() && t.isValid()) {
-                // $gte: 'from' date ka 00:00:00 PKT
-                start = f.startOf('day').toDate();
-                
-                // $lt: 'to' date se agle din ka 00:00:00 PKT. 
-                end = t.toDate(); // Ab yeh 15 Dec 00:00 PKT (14 Dec 19:00 UTC) hona chahiye
+            if (start && end) {
+                query.createdAt = { $gte: start, $lte: end };
             }
         }
-        
-        // Final MongoDB Query Construction: Date operator dynamically set hoga
-        if (start && end) {
-            query.createdAt = { $gte: start, [dateOperator]: end };
-        }
 
-        // 🛑 YAHAN LOG HAMESHA RAKHEIN 🛑
-        console.log("PKT Start Time (UTC):", start);
-        console.log(`PKT End Time (${dateOperator}):`, end);
-        console.log("Final MongoDB Query:", query.createdAt);
-        // ------------------------------------
-
-        // --- Brand filter mapping (match exact brand strings used in Add Product) ---
+        // --- Brand/Item Filters (Same as before) ---
         if (brand && brand !== "all") {
             if (brand === "Weldon Paints") query.brandName = /weldon/i;
             else if (brand === "Sparco Paints") query.brandName = /sparco/i;
             else if (brand === "Value Paints") query.brandName = /value/i;
             else if (brand === "Corona Paints") query.brandName = /Corona/i;
-            else if (brand === "Other Paints") query.brandName = /Other Paints|Other/i;
+            else query.brandName = /Other Paints|Other/i;
         }
 
-        // --- Item filter ---
         if (itemName && itemName !== "all") {
             const knownNames = ["Weather Shield", "Emulsion", "Enamel"];
-            if (itemName === "Other") {
-                query.itemName = { $nin: knownNames };
-            } else {
-                query.itemName = new RegExp(`^${itemName}$`, "i"); 
-            }
+            if (itemName === "Other") query.itemName = { $nin: knownNames };
+            else query.itemName = new RegExp(`^${itemName}$`, "i");
         }
 
-        // --- Colour filter
-        // Pehle yahan (brand === "Weldon Paints") laga tha, maine wo hata diya hai
         if (colourName && colourName !== "all") {
-            const escapedColourName = escapeRegExp(colourName);
-            query.colourName = new RegExp(`^${escapedColourName}$`, "i");
+            query.colourName = new RegExp(`^${escapeRegExp(colourName)}$`, "i");
         }
 
-        // --- Unit filter
-        if (unit && unit !== "all") {
-            query.qty = new RegExp(unit, "i");
-        }
-
-        // --- Refund status
+        if (unit && unit !== "all") query.qty = new RegExp(unit, "i");
         if (refund && refund !== "all") query.refundStatus = refund;
 
-        // --- Fetch Sales and Stats Calculation ---
-        const filteredSales = await Sale.find(query).sort({ createdAt: -1 });
+        // 🟢 Speed Optimization (Already fixed)
+        const filteredSales = await Sale.find(query).sort({ createdAt: -1 }).lean();
+        const allProducts = await Product.find({}, 'stockID rate').lean();
+        const productMap = {};
+        allProducts.forEach(p => { productMap[p.stockID] = parseFloat(p.rate || 0); });
 
-        let totalSold = 0;
-        let totalRevenue = 0.0;
-        let totalProfit = 0.0;
-        let totalLoss = 0.0;
-        let totalRefunded = 0.0;
+        let totalSold = 0, totalRevenue = 0, totalProfit = 0, totalLoss = 0, totalRefunded = 0;
+        const enrichedSales = [];
 
         for (const s of filteredSales) {
-            const product = await Product.findOne({ stockID: s.stockID });
-            const purchaseRate = product ? parseFloat(product.rate || 0) : 0;
-
-            let netSoldQty = s.quantitySold - (s.refundQuantity || 0);
-            if (netSoldQty < 0) netSoldQty = 0;
+            const purchaseRate = productMap[s.stockID] || 0;
+            let netSoldQty = Math.max(0, s.quantitySold - (s.refundQuantity || 0));
 
             totalSold += netSoldQty;
-            totalRevenue += parseFloat((netSoldQty * s.rate).toFixed(2));
+            totalRevenue += netSoldQty * s.rate;
+            totalRefunded += (s.refundQuantity || 0) * (s.rate || 0);
 
-            totalRefunded += parseFloat(((s.refundQuantity || 0) * (s.rate || 0)).toFixed(2));
-
-            const saleProfit = parseFloat(((s.rate - purchaseRate) * netSoldQty).toFixed(2));
+            const saleProfit = (s.rate - purchaseRate) * netSoldQty;
             if (saleProfit > 0) totalProfit += saleProfit;
             else totalLoss += Math.abs(saleProfit);
+
+            enrichedSales.push({ ...s, purchaseRate });
         }
 
-        // --- Rendering ---
-        res.render("allSales", {
-            role,
-            sales: filteredSales,
+        const responseData = {
+            sales: enrichedSales,
             stats: { totalSold, totalRevenue, totalProfit, totalLoss, totalRefunded },
-            filter,
-            from,
-            to,
+            role, filter, from, to,
             selectedBrand: brand || "all",
             selectedItem: itemName || "all",
             selectedColour: colourName || "all",
             selectedUnit: unit || "all",
             selectedRefund: refund || "all"
-        });
+        };
+
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+            const ajaxStats = {
+                totalSold,
+                totalRevenue: totalRevenue.toFixed(2),
+                totalProfit: totalProfit.toFixed(2),
+                totalLoss: totalLoss.toFixed(2),
+                totalRefunded: totalRefunded.toFixed(2)
+            };
+            return res.json({ success: true, ...responseData, stats: ajaxStats });
+        }
+
+        res.render("allSales", responseData);
 
     } catch (err) {
-        console.error("❌ Error loading All Sales:", err);
+        console.error("❌ Error:", err);
         res.status(500).send("Error loading sales page");
     }
 });
-
 
 
 
