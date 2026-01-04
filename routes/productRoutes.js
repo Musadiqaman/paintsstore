@@ -85,7 +85,7 @@ router.get("/all", isLoggedIn, allowRoles("admin", "worker"), async (req, res) =
         let query = {};
         let start, end;
 
-        // --- Moment Timezone Logic ---
+        // --- 🟢 Moment Timezone Logic (Same as All Sales) ---
         if (filter === "today") {
             start = moment.tz(PKT_TIMEZONE).startOf('day').toDate();
             end = moment.tz(PKT_TIMEZONE).endOf('day').toDate();
@@ -109,6 +109,15 @@ router.get("/all", isLoggedIn, allowRoles("admin", "worker"), async (req, res) =
             query.createdAt = { $gte: start, $lte: end };
         }
 
+        // 🔵 CONSOLE LOGS (Debugging for Atlas)
+        console.log("--- 🟢 PRODUCT FILTER DEBUG ---");
+        console.log("Filter Type:", filter);
+        console.log("PKT Start:", start ? moment(start).tz(PKT_TIMEZONE).format() : "N/A");
+        console.log("PKT End:", end ? moment(end).tz(PKT_TIMEZONE).format() : "N/A");
+        console.log("UTC Start (Atlas):", start ? start.toISOString() : "N/A");
+        console.log("UTC End (Atlas):", end ? end.toISOString() : "N/A");
+        console.log("-------------------------------");
+
         // --- Brand filter mapping ---
         if (brand && brand !== "all") {
             if (brand === "Weldon Paints") query.brandName = /^Weldon Paints$/i;
@@ -128,13 +137,12 @@ router.get("/all", isLoggedIn, allowRoles("admin", "worker"), async (req, res) =
             }
         }
 
-      // --- Colour filter ---
-   if (colourName && colourName !== "all") {
-    // Apne global function ko call karein
-    const escaped = escapeRegExp(colourName); 
-    query.colourName = new RegExp(`^${escaped}$`, "i");
-  }
-     
+        // --- Colour filter ---
+       // Pehle yahan (brand === "Weldon Paints") laga tha, maine wo hata diya hai
+        if (colourName && colourName !== "all") {
+            const escapedColourName = escapeRegExp(colourName);
+            query.colourName = new RegExp(`^${escapedColourName}$`, "i");
+        }
 
         // --- Unit filter ---
         if (unit && unit !== "all") {
@@ -162,7 +170,7 @@ router.get("/all", isLoggedIn, allowRoles("admin", "worker"), async (req, res) =
             remainingValue += (p.remaining || 0) * (p.rate || 0);
         });
 
-        const responseData = {
+        res.render("allProducts", {
             products: filteredProducts,
             stats: { totalStock, totalRemaining, totalValue, remaining: remainingValue, totalRefundedValue },
             filter, from, to,
@@ -173,14 +181,7 @@ router.get("/all", isLoggedIn, allowRoles("admin", "worker"), async (req, res) =
             stockStatus: stockStatus || "all",
             selectedRefund: refund || "all",
             role
-        };
-
-        // --- AJAX Check (For Single Page Update) ---
-        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
-            return res.json({ success: true, ...responseData });
-        }
-
-        res.render("allProducts", responseData);
+        });
     } catch (err) {
         console.error("❌ Error loading All Products:", err);
         res.status(500).send("Error loading products page");

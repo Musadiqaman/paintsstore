@@ -23,10 +23,9 @@ router.get("/login",isAlreadyLoggedIn, (req, res) => {
 
 
 
-// ==========================================
-// CREATE ADMIN (ONLY ONCE) auth/create-admin
-// ===========================================
-
+// =========================
+// CREATE ADMIN (ONLY ONCE)
+// =========================
 
 // router.get("/create-admin", async (req, res) => {
 //   try {
@@ -86,9 +85,9 @@ router.get("/login",isAlreadyLoggedIn, (req, res) => {
 // });
 
 
-// ============================================
-// CREATE WORKER (ONLY ONCE) auth/create-worker
-// ============================================
+// ===========================
+// CREATE WORKER (ONLY ONCE)
+// ===========================
 
 // router.get("/create-worker", async (req, res) => {
 //   try {

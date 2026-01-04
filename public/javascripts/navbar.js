@@ -1,27 +1,16 @@
-const sidebar = document.getElementById("sidebar");
-const hamburger = document.getElementById("hamburger");
-const overlay = document.getElementById("overlay");
+// Submenu toggle
+    document.querySelectorAll(".menu-group").forEach(group => {
+      const dropdown = group.querySelector(".dropdown");
+      const submenu = group.querySelector(".submenu");
+      const arrow = group.querySelector(".arrow");
 
-/* HAMBURGER FIX (REAL MOBILE SAFE) */
-function toggleSidebar() {
-  sidebar.classList.toggle("mobile-open");
-  overlay.classList.toggle("show");
-}
+      dropdown.addEventListener("click", () => {
+        document.querySelectorAll(".submenu").forEach(s => { if (s !== submenu) s.classList.remove("open"); });
+        document.querySelectorAll(".arrow").forEach(a => { if (a !== arrow) a.textContent = '▶'; });
+        submenu.classList.toggle("open");
+        arrow.textContent = submenu.classList.contains("open") ? '▼' : '▶';
+      });
+    });
 
-hamburger.addEventListener("click", toggleSidebar);
-hamburger.addEventListener("touchstart", toggleSidebar);
 
-overlay.addEventListener("click", toggleSidebar);
-overlay.addEventListener("touchstart", toggleSidebar);
-
-/* SUBMENU */
-document.querySelectorAll(".menu-group").forEach(group => {
-  const dropdown = group.querySelector(".dropdown");
-  const submenu = group.querySelector(".submenu");
-  const arrow = group.querySelector(".arrow");
-
-  dropdown.addEventListener("click", () => {
-    submenu.classList.toggle("open");
-    arrow.textContent = submenu.classList.contains("open") ? "▼" : "▶";
-  });
-});
+    
