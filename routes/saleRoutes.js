@@ -139,7 +139,7 @@ router.get("/all", isLoggedIn, allowRoles("admin"), async (req, res) => {
 
         const nowPKT = moment().tz(PKT_TIMEZONE);
         
-        // 🟢 1. EXACT DATE LOGIC (From your old code)
+        // 🟢 1. EXACT OLD DATE LOGIC (For 100% Accuracy)
         if (filter === "today" || filter === "yesterday" || filter === "month" || filter === "lastMonth") {
             if (filter === "today") {
                 start = nowPKT.clone().startOf('day').toDate();
@@ -157,7 +157,7 @@ router.get("/all", isLoggedIn, allowRoles("admin"), async (req, res) => {
                 end = lastMonthPKT.endOf('month').toDate();
             }
         } else if (filter === "custom" && from && to) {
-            dateOperator = '$lt'; // Custom range uses LESS THAN next day logic
+            dateOperator = '$lt'; // Custom uses LESS THAN next day
             const f = moment.tz(from, 'YYYY-MM-DD', PKT_TIMEZONE);
             let t = moment.tz(to, 'YYYY-MM-DD', PKT_TIMEZONE);
             t.add(1, 'days').startOf('day'); 
@@ -168,6 +168,7 @@ router.get("/all", isLoggedIn, allowRoles("admin"), async (req, res) => {
             }
         }
         
+        // Final Query with dynamic operator (Just like your old code)
         if (start && end) {
             query.createdAt = { $gte: start, [dateOperator]: end };
         }
@@ -194,7 +195,7 @@ router.get("/all", isLoggedIn, allowRoles("admin"), async (req, res) => {
         if (unit && unit !== "all") query.qty = new RegExp(unit, "i");
         if (refund && refund !== "all") query.refundStatus = refund;
 
-        // 🟢 3. SPEED OPTIMIZATION (No loop queries)
+        // 🟢 3. SPEED OPTIMIZATION (No loop queries + SPA Ready)
         const filteredSales = await Sale.find(query).sort({ createdAt: -1 }).lean();
         const allProducts = await Product.find({}, 'stockID rate').lean();
         
@@ -218,13 +219,18 @@ router.get("/all", isLoggedIn, allowRoles("admin"), async (req, res) => {
             if (saleProfit > 0) totalProfit += saleProfit;
             else totalLoss += Math.abs(saleProfit);
 
-            // Purchase rate attach kar rahe hain frontend ke liye
             enrichedSales.push({ ...s, purchaseRate });
         }
 
         const responseData = {
             sales: enrichedSales,
-            stats: { totalSold, totalRevenue, totalProfit, totalLoss, totalRefunded },
+            stats: { 
+                totalSold, 
+                totalRevenue: totalRevenue.toFixed(2), 
+                totalProfit: totalProfit.toFixed(2), 
+                totalLoss: totalLoss.toFixed(2), 
+                totalRefunded: totalRefunded.toFixed(2) 
+            },
             role, filter, from, to,
             selectedBrand: brand || "all",
             selectedItem: itemName || "all",
@@ -233,16 +239,9 @@ router.get("/all", isLoggedIn, allowRoles("admin"), async (req, res) => {
             selectedRefund: refund || "all"
         };
 
-        // 🟢 4. AJAX & RENDER logic
+        // 🟢 4. AJAX / SPA Check
         if (req.xhr || req.headers.accept.indexOf('json') > -1) {
-            const ajaxStats = {
-                totalSold,
-                totalRevenue: totalRevenue.toFixed(2),
-                totalProfit: totalProfit.toFixed(2),
-                totalLoss: totalLoss.toFixed(2),
-                totalRefunded: totalRefunded.toFixed(2)
-            };
-            return res.json({ success: true, ...responseData, stats: ajaxStats });
+            return res.json({ success: true, ...responseData });
         }
 
         res.render("allSales", responseData);
