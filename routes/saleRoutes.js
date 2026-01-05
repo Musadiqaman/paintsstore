@@ -124,9 +124,9 @@ router.post("/add",isLoggedIn,allowRoles("admin", "worker"), async (req, res) =>
 ================================ */
 // PKT Time Zone Identifier
 // PKT Time Zone Identifier
+// PKT Time Zone Identifier
 const PKT_TIMEZONE = 'Asia/Karachi';
 
-// Escape function for regex
 function escapeRegExp(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -137,11 +137,11 @@ router.get("/all", isLoggedIn, allowRoles("admin"), async (req, res) => {
         let { filter, from, to, brand, itemName, colourName, unit, refund } = req.query;
         let query = {};
         let start, end;
-        let dateOperator = '$lte'; // Default operator
+        let dateOperator = '$lte'; 
 
         const nowPKT = moment().tz(PKT_TIMEZONE);
         
-        // 1. NON-CUSTOM FILTERS (Bilkul aapki logic)
+        // 🟢 1. RE-FIXED DATE LOGIC (Solving the 5-Hour UTC Overlap)
         if (filter === "today" || filter === "yesterday" || filter === "month" || filter === "lastMonth") {
             if (filter === "today") {
                 start = nowPKT.clone().startOf('day').toDate();
@@ -158,43 +158,33 @@ router.get("/all", isLoggedIn, allowRoles("admin"), async (req, res) => {
                 start = lastMonthPKT.startOf('month').toDate();
                 end = lastMonthPKT.endOf('month').toDate();
             }
-        } 
-        // 2. CUSTOM FILTER (Yahan se 16 ka data nahi aayega, exact aapki logic)
-        else if (filter === "custom" && from && to) {
-            dateOperator = '$lt'; 
-            const f = moment.tz(from, 'YYYY-MM-DD', PKT_TIMEZONE);
-            let t = moment.tz(to, 'YYYY-MM-DD', PKT_TIMEZONE);
-
-            // Mutation: Agle din ka start (Yani 17 select hai to 18 ki 00:00)
-            t.add(1, 'days').startOf('day'); 
+        } else if (filter === "custom" && from && to) {
             
-            if (f.isValid() && t.isValid()) {
-                start = f.startOf('day').toDate();
-                end = t.toDate(); 
-            }
+            dateOperator = '$lt'; 
+            
+            // 🛑 MAIN FIX: Hum Pakistan Time ke hours ko manually UTC offset ke sath set kar rahe hain
+            // Taake 17 ki subah 00:00 PKT se pehle ka 1 minute bhi shamil na ho
+            start = moment.tz(from, PKT_TIMEZONE).startOf('day').toDate();
+            end = moment.tz(to, PKT_TIMEZONE).add(1, 'days').startOf('day').toDate();
         }
         
-        // Final MongoDB Query
         if (start && end) {
             query.createdAt = { $gte: start, [dateOperator]: end };
         }
 
-        // --- Filters with escapeRegExp ---
+        // 🟢 2. FILTERS (With escapeRegExp)
         if (brand && brand !== "all") {
             if (brand === "Weldon Paints") query.brandName = /weldon/i;
             else if (brand === "Sparco Paints") query.brandName = /sparco/i;
             else if (brand === "Value Paints") query.brandName = /value/i;
             else if (brand === "Corona Paints") query.brandName = /Corona/i;
-            else if (brand === "Other Paints") query.brandName = /Other Paints|Other/i;
+            else query.brandName = /Other Paints|Other/i;
         }
 
         if (itemName && itemName !== "all") {
             const knownNames = ["Weather Shield", "Emulsion", "Enamel"];
-            if (itemName === "Other") {
-                query.itemName = { $nin: knownNames };
-            } else {
-                query.itemName = new RegExp(`^${escapeRegExp(itemName)}$`, "i");
-            }
+            if (itemName === "Other") query.itemName = { $nin: knownNames };
+            else query.itemName = new RegExp(`^${escapeRegExp(itemName)}$`, "i");
         }
 
         if (colourName && colourName !== "all") {
@@ -207,7 +197,7 @@ router.get("/all", isLoggedIn, allowRoles("admin"), async (req, res) => {
 
         if (refund && refund !== "all") query.refundStatus = refund;
 
-        // --- Optimized Data Fetching (Fast Speed) ---
+        // 🟢 3. SPEED OPTIMIZATION
         const filteredSales = await Sale.find(query).sort({ createdAt: -1 }).lean();
         const allProducts = await Product.find({}, 'stockID rate').lean();
         
@@ -251,7 +241,6 @@ router.get("/all", isLoggedIn, allowRoles("admin"), async (req, res) => {
             selectedRefund: refund || "all"
         };
 
-        // SPA / AJAX Support
         if (req.xhr || req.headers.accept.indexOf('json') > -1) {
             return res.json({ success: true, ...responseData });
         }
