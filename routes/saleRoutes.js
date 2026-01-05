@@ -135,11 +135,11 @@ router.get("/all", isLoggedIn, allowRoles("admin"), async (req, res) => {
         let { filter, from, to, brand, itemName, colourName, unit, refund } = req.query;
         let query = {};
         let start, end;
-        let dateOperator = '$lte'; // Default operator
+        let dateOperator = '$lte'; // Default operator for today, yesterday, month
 
         const nowPKT = moment().tz(PKT_TIMEZONE);
         
-        // 🟢 1. EXACT OLD DATE LOGIC (Bilkul wahi jo aapne pehle bheji thi)
+        // 🟢 1. EXACT OLD DATE LOGIC (For 100% Accuracy)
         if (filter === "today" || filter === "yesterday" || filter === "month" || filter === "lastMonth") {
             if (filter === "today") {
                 start = nowPKT.clone().startOf('day').toDate();
@@ -157,14 +157,17 @@ router.get("/all", isLoggedIn, allowRoles("admin"), async (req, res) => {
                 end = lastMonthPKT.endOf('month').toDate();
             }
         } else if (filter === "custom" && from && to) {
-            dateOperator = '$lt'; // Custom uses LESS THAN next day logic
+            // 🛑 CUSTOM LOGIC: EXACTLY LIKE YOUR OLD CODE
+            dateOperator = '$lt'; 
             const f = moment.tz(from, 'YYYY-MM-DD', PKT_TIMEZONE);
             let t = moment.tz(to, 'YYYY-MM-DD', PKT_TIMEZONE);
+
+            // Step: Date ko ek din aage badhao (Exactly as per your working old code)
             t.add(1, 'days').startOf('day'); 
             
             if (f.isValid() && t.isValid()) {
                 start = f.startOf('day').toDate();
-                end = t.toDate();
+                end = t.toDate(); // Next day 00:00:00
             }
         }
         
@@ -195,7 +198,7 @@ router.get("/all", isLoggedIn, allowRoles("admin"), async (req, res) => {
         if (unit && unit !== "all") query.qty = new RegExp(unit, "i");
         if (refund && refund !== "all") query.refundStatus = refund;
 
-        // 🟢 3. SPEED OPTIMIZATION (Product Mapping)
+        // 🟢 3. SPEED OPTIMIZATION (Product Mapping - FAST)
         const filteredSales = await Sale.find(query).sort({ createdAt: -1 }).lean();
         const allProducts = await Product.find({}, 'stockID rate').lean();
         
@@ -222,7 +225,7 @@ router.get("/all", isLoggedIn, allowRoles("admin"), async (req, res) => {
             enrichedSales.push({ ...s, purchaseRate });
         }
 
-        // 🟢 4. RESPONSE FORMATTING (Decimal Fix + No Crash)
+        // 🟢 4. RESPONSE FORMATTING (Decimal Fix + SPA Ready)
         const responseData = {
             sales: enrichedSales,
             stats: { 
@@ -240,7 +243,6 @@ router.get("/all", isLoggedIn, allowRoles("admin"), async (req, res) => {
             selectedRefund: refund || "all"
         };
 
-        // AJAX / SPA Support
         if (req.xhr || req.headers.accept.indexOf('json') > -1) {
             return res.json({ success: true, ...responseData });
         }
