@@ -380,7 +380,7 @@ async function updateTable() {
                         </td>
                         ${data.role === "admin" ? `
                         <td>
-                            <button type="button" class="delete-btn delete-sale" data-id="${p._id}">
+                            <button type="button" id="delete" class="delete-btn delete-sale" data-id="${p._id}">
                                 Delete
                             </button>
                         </td>` : ''}
