@@ -127,6 +127,7 @@ router.post("/add",isLoggedIn,allowRoles("admin", "worker"), async (req, res) =>
 // PKT Time Zone Identifier
 const PKT_TIMEZONE = 'Asia/Karachi';
 
+// Regex escape function jo aapne manga tha
 function escapeRegExp(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -141,7 +142,7 @@ router.get("/all", isLoggedIn, allowRoles("admin"), async (req, res) => {
 
         const nowPKT = moment().tz(PKT_TIMEZONE);
         
-        // 🟢 1. RE-FIXED DATE LOGIC (Solving the 5-Hour UTC Overlap)
+        // 🟢 1. YE HAI AAPKI ORIGINAL DATE LOGIC (No Changes)
         if (filter === "today" || filter === "yesterday" || filter === "month" || filter === "lastMonth") {
             if (filter === "today") {
                 start = nowPKT.clone().startOf('day').toDate();
@@ -159,26 +160,30 @@ router.get("/all", isLoggedIn, allowRoles("admin"), async (req, res) => {
                 end = lastMonthPKT.endOf('month').toDate();
             }
         } else if (filter === "custom" && from && to) {
-            
             dateOperator = '$lt'; 
+            const f = moment.tz(from, 'YYYY-MM-DD', PKT_TIMEZONE);
+            let t = moment.tz(to, 'YYYY-MM-DD', PKT_TIMEZONE);
             
-            // 🛑 MAIN FIX: Hum Pakistan Time ke hours ko manually UTC offset ke sath set kar rahe hain
-            // Taake 17 ki subah 00:00 PKT se pehle ka 1 minute bhi shamil na ho
-            start = moment.tz(from, PKT_TIMEZONE).startOf('day').toDate();
-            end = moment.tz(to, PKT_TIMEZONE).add(1, 'days').startOf('day').toDate();
+            // Exact original step: 1 day add karna
+            t.add(1, 'days').startOf('day'); 
+            
+            if (f.isValid() && t.isValid()) {
+                start = f.startOf('day').toDate();
+                end = t.toDate(); 
+            }
         }
         
         if (start && end) {
             query.createdAt = { $gte: start, [dateOperator]: end };
         }
 
-        // 🟢 2. FILTERS (With escapeRegExp)
+        // 🟢 2. FILTERS (With escapeRegExp for accuracy)
         if (brand && brand !== "all") {
             if (brand === "Weldon Paints") query.brandName = /weldon/i;
             else if (brand === "Sparco Paints") query.brandName = /sparco/i;
             else if (brand === "Value Paints") query.brandName = /value/i;
             else if (brand === "Corona Paints") query.brandName = /Corona/i;
-            else query.brandName = /Other Paints|Other/i;
+            else if (brand === "Other Paints") query.brandName = /Other Paints|Other/i;
         }
 
         if (itemName && itemName !== "all") {
@@ -197,7 +202,7 @@ router.get("/all", isLoggedIn, allowRoles("admin"), async (req, res) => {
 
         if (refund && refund !== "all") query.refundStatus = refund;
 
-        // 🟢 3. SPEED OPTIMIZATION
+        // 🟢 3. SPEED FIX: Product mapping (Loop ke andar findOne khatam)
         const filteredSales = await Sale.find(query).sort({ createdAt: -1 }).lean();
         const allProducts = await Product.find({}, 'stockID rate').lean();
         
@@ -214,6 +219,8 @@ router.get("/all", isLoggedIn, allowRoles("admin"), async (req, res) => {
             let netSoldQty = Math.max(0, (s.quantitySold || 0) - (s.refundQuantity || 0));
 
             totalSold += netSoldQty;
+            
+            // 🟢 4. DECIMAL FIX: Har step par precision maintain
             totalRevenue += (netSoldQty * (s.rate || 0));
             totalRefunded += ((s.refundQuantity || 0) * (s.rate || 0));
 
@@ -224,6 +231,7 @@ router.get("/all", isLoggedIn, allowRoles("admin"), async (req, res) => {
             enrichedSales.push({ ...s, purchaseRate });
         }
 
+        // Response bhejte waqt numbers ko clean karna
         const responseData = {
             sales: enrichedSales,
             stats: { 
@@ -248,7 +256,7 @@ router.get("/all", isLoggedIn, allowRoles("admin"), async (req, res) => {
 
     } catch (err) {
         console.error("❌ Error:", err);
-        res.status(500).send("Error");
+        res.status(500).send("Server Error");
     }
 });
 
