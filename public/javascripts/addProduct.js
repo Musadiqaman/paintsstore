@@ -440,13 +440,24 @@ async function submitData() {
     alert("⚠️ Please add at least one product!");
     return;
   }
+
+  // 1. Button aur Loading setup
+  const submitBtn = document.querySelector(".submit-btn");
+  const originalText = submitBtn.innerHTML; // "Submit & Save" mehfooz kar liya
+  
+  // 2. Button ko disable karein aur loader dikhayein
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = `<span class="spinner"></span> Saving...`;
+
   try {
     const res = await fetch("/products/add-multiple", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ products: tempProducts }),
     });
+    
     const data = await res.json();
+    
     if (res.ok && data.success) {
       alert("✅ Saved Successfully!");
 
@@ -459,7 +470,13 @@ async function submitData() {
     } else {
       throw new Error(data.message || "Failed to save");
     }
-  } catch (err) { alert("Error: " + err.message); }
+  } catch (err) { 
+    alert("Error: " + err.message); 
+  } finally {
+    // 3. Kaam khatam hone par button wapas asli halat mein (Loader hat jayega)
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = originalText;
+  }
 }
 
 document.getElementById("add").addEventListener("click", addProduct);
