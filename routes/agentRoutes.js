@@ -150,6 +150,7 @@ router.get('/view-agent/:id', isLoggedIn, allowRoles("admin", "worker"), async (
         const nowPKT = moment.tz(PKT_TIMEZONE);
         let start, end;
 
+        // Default "all" handle karne ke liye
         if (filter === "today") {
             start = nowPKT.clone().startOf('day').toDate();
             end = nowPKT.clone().endOf('day').toDate();
@@ -191,9 +192,9 @@ router.get('/view-agent/:id', isLoggedIn, allowRoles("admin", "worker"), async (
             totalPercentageAmountLeft: totalPercentageAmount - totalPercentageAmountGiven
         };
 
-        const responseData = { role, agent, stats, filter, from, to };
+        const responseData = { role, agent, stats, filter: filter || 'all', from, to };
 
-        // 🟢 AJAX Request Handle
+        // 🟢 AJAX Request Handle (Ye page ko refresh hone se bachayega)
         if (req.xhr || req.headers.accept.indexOf('json') > -1) {
             return res.json({ success: true, ...responseData });
         }
