@@ -61,3 +61,10 @@ document.querySelectorAll('form').forEach(form => {
         }
     });
 });
+
+
+window.addEventListener('pageshow', (event) => {
+    // Agar user back button se wapis aaye, tab bhi loader chhupa do
+    const loader = document.getElementById('global-page-loader');
+    if (loader) loader.style.display = 'none';
+});
