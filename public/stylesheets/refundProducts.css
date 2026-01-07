@@ -5,6 +5,12 @@
   box-sizing: border-box;
 }
 
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f4f7fa;
+  min-height: 100vh;
+}
+
 /* ================= SCROLLBAR ================= */
 ::-webkit-scrollbar {
   width: 8px;
@@ -18,20 +24,14 @@
   background-color: #f1f1f1;
 }
 
-body {
-  font-family: 'Segoe UI', sans-serif;
-  background-color: #f4f7fa;
-}
-
-/* ================= MAIN WRAPPER ================= */
+/* ================= MAIN WRAPPER (Center Alignment Fix) ================= */
 .content-wrapper {
-  margin-left: 0; 
   width: 100%;
   min-height: 100vh;
   display: flex;
-  flex-direction: column;   /* Title upar aur form niche lane ke liye */
-  justify-content: center;  /* Vertical center alignment */
-  align-items: center;      /* Horizontal center alignment */
+  flex-direction: column;
+  justify-content: center; /* Vertical Center */
+  align-items: center;      /* Horizontal Center */
   padding: 20px;
   transition: 0.3s ease;
 }
@@ -40,80 +40,81 @@ body {
 h1 {
   color: #06a56c;
   text-align: center;
-  margin-bottom: 20px;
-  font-size: 26px;
+  margin-bottom: 25px;
+  font-size: 28px;
+  font-weight: 700;
 }
 
 /* ================= FORM CONTAINER ================= */
 .form-container {
   background: #ffffff;
+  padding: 35px 30px;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 450px; /* Form ki munasib width */
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 420px;
 }
 
 /* ================= INPUTS ================= */
 input {
-  padding: 12px 20px;
-  border: 1.4px solid #696969;
-  border-radius: 8px;
+  padding: 14px 18px;
+  border: 1.5px solid #d1d1d1;
+  border-radius: 10px;
   width: 100%;
   font-size: 15px;
-  margin-bottom: 12px;
-  transition: all 0.3s ease-in-out;
-  background-color: #fff;
+  margin-bottom: 15px;
+  transition: all 0.3s ease;
+  outline: none;
 }
 
 input:focus {
   border-color: #06a56c;
-  outline: none;
   box-shadow: 0 0 8px rgba(6, 165, 108, 0.2);
 }
 
-/* ================= BUTTONS ================= */
-button#add {
+/* ================= SUBMIT BUTTON ================= */
+button#add, .submit-btn {
   background-color: #a6e7d8;
   color: #008767;
   border: 2px solid #00B087;
-  padding: 12px;
-  border-radius: 8px;
+  padding: 14px;
+  border-radius: 10px;
   width: 100%;
-  font-size: 15px;
-  font-weight: 600;
-  margin-top: 5px;
-  transition: all 0.3s ease;
+  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
 }
 
 button#add:hover {
   background-color: #00B087;
-  border-color: #006f5f;
   color: white;
   transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 176, 135, 0.3);
 }
 
 button#add:disabled {
-  background-color: #047a50;
+  background-color: #ccc;
+  border-color: #bbb;
+  color: #666;
   cursor: not-allowed;
-  opacity: 0.8;
+  transform: none;
 }
 
 /* ================= SPINNER ================= */
 .spinner {
-  width: 18px;
-  height: 18px;
-  border: 2px solid #ffffff;
+  width: 20px;
+  height: 20px;
+  border: 3px solid #ffffff;
   border-bottom-color: transparent;
   border-radius: 50%;
   display: inline-block;
   animation: rotation 1s linear infinite;
   vertical-align: middle;
-  margin-right: 8px;
+  margin-right: 10px;
 }
 
 @keyframes rotation {
@@ -121,60 +122,46 @@ button#add:disabled {
   100% { transform: rotate(360deg); }
 }
 
-/* ================= RESPONSIVE DESIGN ================= */
-
-/* DESKTOP (If Sidebar is 250px) */
+/* ================= RESPONSIVE (LAPTOP/DESKTOP) ================= */
 @media (min-width: 1025px) {
   .content-wrapper {
+    /* Sidebar ki width ki wajah se margin left balance kiya */
     margin-left: 250px; 
     width: calc(100% - 250px);
   }
 }
 
-/* TABLET */
+/* ================= RESPONSIVE (MOBILE/TABLET) ================= */
 @media (max-width: 1024px) {
   .content-wrapper {
     margin-left: 0;
     width: 100%;
-    padding: 40px 20px;
+    padding-top: 100px; /* Hamburger menu ke niche space banaye ga */
+    justify-content: flex-start; /* Mobile par keyboard khulne par scroll asan hota hai */
+  }
+
+  h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+
+  .form-container {
+    max-width: 90%;
+    padding: 25px 20px;
   }
 }
 
-/* MOBILE (Hamburger Fix) */
-@media (max-width: 600px) {
+@media (max-width: 480px) {
   .content-wrapper {
-    padding-top: 80px; /* Hamburger menu ki wajah se jo space chahiye */
-    justify-content: flex-start; /* Mobile par upar se start ho taake keyboard masla na kare */
+    padding-top: 90px;
   }
 
   h1 {
     font-size: 22px;
-    margin-bottom: 15px;
-  }
-
-  .form-container {
-    padding: 20px;
-    max-width: 100%;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
   }
 
   input {
+    padding: 12px 15px;
     font-size: 14px;
-    padding: 10px 14px;
-  }
-
-  button#add {
-    font-size: 14px;
-    padding: 10px;
-  }
-}
-
-/* SMALL MOBILE */
-@media (max-width: 360px) {
-  h1 {
-    font-size: 20px;
-  }
-  .form-container {
-    padding: 15px;
   }
 }
