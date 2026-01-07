@@ -267,3 +267,9 @@ td button#delete {
   cursor: not-allowed;
   opacity: 0.8;
 }
+
+
+.no-data{
+  text-align: left;
+
+}
