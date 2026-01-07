@@ -211,11 +211,6 @@ main {
         background-color: #f0fdf9;
     }
 
-    main { 
-        margin-left: 0 !important; 
-        width: 100%;
-        padding: 15px; 
-        padding-top: 80px; /* Hamburger ki jagah chhordi */
-    }
+    
 }
 
