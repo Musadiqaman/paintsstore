@@ -215,7 +215,7 @@ main {
     width: 50px;
     height: 50px;
     border: 5px solid #f3f3f3;
-    border-top: 5px solid #2196F3; /* Weldon Paints Blue */
+    border-top: 5px solid #098D69; /* Weldon Paints Blue */
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -224,3 +224,5 @@ main {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+

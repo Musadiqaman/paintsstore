@@ -28,6 +28,9 @@ document.querySelectorAll(".menu-group").forEach(group => {
 
 
 
+
+
+
 // 1. Jab naya page khul jaye to loader chhupa do
 window.addEventListener('load', () => {
     const loader = document.getElementById('global-page-loader');
