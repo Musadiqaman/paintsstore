@@ -159,7 +159,7 @@ td button#delete {
   padding: 12px;
   color: #888;
   text-align: start;
-  padding-left: 50px; /* Is value ko aap apni pasand ke mutabiq kam ya zyada kar sakte hain */
+  padding-left: 180px; /* Is value ko aap apni pasand ke mutabiq kam ya zyada kar sakte hain */
 }
 
   main {
