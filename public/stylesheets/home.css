@@ -53,8 +53,6 @@ DASHBOARD LAYOUT
 ================================ */
 .dashboard {
   padding: 30px;
-  margin-left: 260px;
-  transition: margin-left 0.3s ease;
 }
 
 /* ===============================
