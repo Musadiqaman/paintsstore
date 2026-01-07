@@ -6,42 +6,7 @@
   <link rel="icon" href="/images/weldon-paints-logo.png" type="image/png">
   <link rel="stylesheet" href="/stylesheets/viewAgent.css">
 
-  <style>
-    /* 🟢 NEW LOADER & SPINNER CSS */
-    .spinner {
-      width: 35px;
-      height: 35px;
-      border: 4px solid rgba(0, 0, 0, 0.1);
-      border-left-color: #06A56C;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* Space Fix: Table ke nichay faltu jagah khatam karne ke liye */
-    .table-container { 
-      position: relative; 
-      min-height: 100px; /* Puray page ki jagah nahi gheray ga */
-      background: #fff;
-      border-radius: 8px;
-      margin-bottom: 20px;
-    }
-
-    /* Loader Overlay */
-    #tableLoader {
-      display: none;
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(255, 255, 255, 0.8);
-      z-index: 100;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-    }
-
-    .btn-loading { opacity: 0.6; pointer-events: none; }
-  </style>
 </head>
 <body>
   <%- include('partials/navbar') %>
