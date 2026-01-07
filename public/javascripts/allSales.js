@@ -445,21 +445,73 @@ function populateItemFilter(brand) {
     }
 }
 
-// ===================== INITIALIZATION =========================
+// ===================== NEW POPULATE FUNCTIONS =========================
+
+// 1. Units dropdown bharne ke liye
+function populateUnitFilter(brand) {
+    unitFilter.innerHTML = '<option value="all">All Units</option>';
+    if (!brand || brand === 'all' || !brandUnits[brand]) {
+        unitFilter.disabled = true;
+        return;
+    }
+    unitFilter.disabled = false;
+    brandUnits[brand].forEach(u => {
+        const o = document.createElement('option');
+        o.value = u; o.textContent = u;
+        unitFilter.appendChild(o);
+    });
+}
+
+// 2. Colours dropdown bharne ke liye
+function populateColourFilter(brand, item) {
+    colourFilter.innerHTML = '<option value="all">All Colours</option>';
+    const key = `${brand}-${item}`;
+    
+    if (!brand || brand === 'all' || !item || item === 'all' || !productOptions[key]) {
+        colourFilter.disabled = true;
+        return;
+    }
+    
+    colourFilter.disabled = false;
+    productOptions[key].forEach(c => {
+        const o = document.createElement('option');
+        // Value hum "Colour (Code: XXX)" format mein rakh rahe hain jaisa aapke table mein hota hai
+        o.value = `${c.colour} (Code: ${c.code})`; 
+        o.textContent = `${c.colour} (Code: ${c.code})`;
+        colourFilter.appendChild(o);
+    });
+}
+
+// ===================== INITIALIZATION (UPDATED) =========================
 
 window.addEventListener('DOMContentLoaded', () => {
-    // Initial Setup
-    if (brandFilter) populateItemFilter(brandFilter.value);
+    // Initial Setup on Page Load
+    if (brandFilter) {
+        populateItemFilter(brandFilter.value);
+        populateUnitFilter(brandFilter.value);
+    }
     toggleDateInputs(dateFilter.value);
     attachDeleteListeners();
 
-    // AJAX Event Listeners
+    // Jab Brand badle to Items aur Units dono update hon
     brandFilter.addEventListener('change', () => {
-        populateItemFilter(brandFilter.value);
+        const brand = brandFilter.value;
+        populateItemFilter(brand);
+        populateUnitFilter(brand);
+        // Item badal gaya to colour reset kar do
+        colourFilter.innerHTML = '<option value="all">All Colours</option>';
+        colourFilter.disabled = true;
         updateTable();
     });
 
-    [itemFilter, colourFilter, unitFilter, refundFilter].forEach(f => {
+    // Jab Item badle to Colours update hon
+    itemFilter.addEventListener('change', () => {
+        populateColourFilter(brandFilter.value, itemFilter.value);
+        updateTable();
+    });
+
+    // Baqi filters par sirf table update ho
+    [colourFilter, unitFilter, refundFilter].forEach(f => {
         if (f) f.addEventListener('change', updateTable);
     });
 

@@ -112,26 +112,44 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         document.querySelectorAll(".submit-pay-btn").forEach(btn => {
-            btn.onclick = async () => {
-                const id = btn.dataset.id;
-                const inputEl = document.getElementById(`payInput-${id}`);
-                const amt = inputEl.value;
-                if (!amt || amt <= 0) return alert("Enter valid amount");
+        btn.onclick = async () => {
+        const id = btn.dataset.id;
+        const inputEl = document.getElementById(`payInput-${id}`);
+        const amt = inputEl.value;
+
+        if (!amt || amt <= 0) return alert("❌ Please enter a valid amount");
+
+        btn.disabled = true;
+        btn.innerText = "...";
+
+        try {
+            const res = await fetch(`/agents/pay-item/${id}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ amount: parseFloat(amt) })
+            });
+
+            const result = await res.json(); 
+
+            if (result.success) {
+                // ✅ Professional Success Message
+                alert(`✅ Payment Success!\n---------------------------\nAmount: Rs ${Number(amt).toLocaleString()}`); 
                 
-                btn.disabled = true;
-                btn.innerText = "...";
-                
-                try {
-                    const res = await fetch(`/agents/pay-item/${id}`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ amount: parseFloat(amt) })
-                    });
-                    if (res.ok) fetchData();
-                    else { alert("Payment Failed"); btn.disabled = false; btn.innerText = "OK"; }
-                } catch (e) { alert("Error"); }
-            };
-        });
+                fetchData(); 
+            } else {
+                // ❌ Backend Error Message (e.g., Over payment)
+                alert(`⚠️ Error: ${result.message || "Payment Failed"}`); 
+                btn.disabled = false;
+                btn.innerText = "Submit"; 
+            }
+        } catch (e) {
+            console.error(e);
+            alert("🌐 Network Error: Check your connection.");
+            btn.disabled = false;
+            btn.innerText = "Submit";
+        }
+    };
+});
 
         document.querySelectorAll(".delete-btn").forEach(btn => {
             btn.onclick = async () => {
