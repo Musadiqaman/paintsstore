@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         } catch (err) { 
             console.error("Error:", err); 
-            alert("Data load nahi ho saka.");
+            alert("Data can't be loaded.");
         } 
         finally { 
             tableLoader.style.display = "none"; 
