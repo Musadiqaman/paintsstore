@@ -83,18 +83,20 @@
                 </td>
                 <td>Rs <%= i.paidAmount %></td>
                 <td>Rs <%= (Number(i.percentageAmount) - Number(i.paidAmount)).toFixed(2) %></td>
-               <td>
-  <%= new Date(i.createdAt).toLocaleDateString('en-GB', { 
-      timeZone: 'Asia/Karachi' 
-  }) %>
-  <br>
-  <small style="color: #007bff; font-weight: bold;">
-    <%= new Date(i.createdAt).toLocaleTimeString('en-GB', { 
-        hour: '2-digit', 
-        minute: '2-digit', 
-        hour12: true, 
-        timeZone: 'Asia/Karachi' 
-    }) %>
+              <td style="text-align: center; line-height: 1.2;">
+  <div style="font-weight: 700; font-size: 10px;">
+    <% 
+      // Date ko Pakistan Timezone mein convert karne ka sab se solid tareeqa
+      let dateOptions = { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Karachi' };
+      let timeOptions = { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Karachi' };
+      
+      let pkrDate = new Date(i.createdAt).toLocaleDateString('en-GB', dateOptions);
+      let pkrTime = new Date(i.createdAt).toLocaleTimeString('en-GB', timeOptions);
+    %>
+    <%= pkrDate %>
+  </div>
+  <small style="color: #000; font-weight: 800; font-size: 9px; display: block;">
+    <%= pkrTime.toUpperCase() %>
   </small>
 </td>
                 <td class="actions">

@@ -339,7 +339,7 @@ router.get('/print', isLoggedIn, allowRoles("admin", "worker"), async (req, res)
 /* ================================
    🟢 Sales History (GET) 
 ================================ */
-router.get('/history', isLoggedIn, allowRoles("admin"), async (req, res) => {
+router.get('/history', isLoggedIn, allowRoles("admin","worker"), async (req, res) => {
     try {
         let { filter = 'month', agentId, from, to, ajax } = req.query;
         let query = {};
