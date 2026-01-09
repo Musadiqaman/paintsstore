@@ -1,66 +1,104 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("JS Loaded and Ready!");
-
-    // --- 1. View Button Listener ---
-    document.querySelectorAll('.view-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const id = this.getAttribute('data-id');
-            if (id) window.location.href = `/sales/bill/${id}`;
-        });
-    });
-
-    // --- 2. Delete Button Listener ---
-    document.querySelectorAll('.delete-btn').forEach(button => {
-        button.addEventListener('click', async function() {
-            const id = this.getAttribute('data-id');
-            if (!id) return;
-
-            if (confirm("⚠️ Are you sure you want to delete this bill?")) {
-                try {
-                    const response = await fetch(`/sales/delete-bill/${id}`, {
-                        method: 'DELETE',
-                        headers: { 'Content-Type': 'application/json' }
-                    });
-                    const result = await response.json();
-
-                    if (result.success) {
-                        alert("✅ Bill Deleted!");
-                        location.reload();
-                    } else {
-                        alert("❌ Error: " + result.message);
-                    }
-                } catch (err) {
-                    alert("❌ Server error.");
-                }
-            }
-        });
-    });
-
-    // --- 3. Filter Logic (Custom Date Logic Fixed) ---
     const filterSelect = document.getElementById('filter');
+    const agentFilter = document.getElementById('agentFilter');
     const fromInput = document.getElementById('from');
     const toInput = document.getElementById('to');
     const applyBtn = document.getElementById('apply');
-    const agentSelect = document.getElementById('agentFilter');
+    const tableBody = document.getElementById('tableBody');
+    const loader = document.getElementById('table-loader');
+    const tableWrapper = document.getElementById('tableWrapper');
 
-    if (filterSelect) {
-        filterSelect.addEventListener('change', () => {
-            if (filterSelect.value === 'custom') {
-                // Custom range par inputs dikhao
-                if(fromInput) fromInput.style.display = 'inline-block';
-                if(toInput) toInput.style.display = 'inline-block';
-                if(applyBtn) applyBtn.style.display = 'inline-block';
-            } else {
-                // Baqi sab par form auto-submit kar do
-                document.getElementById('filterForm').submit();
+    // 1. Show/Hide Custom Dates
+    filterSelect.addEventListener('change', () => {
+        if (filterSelect.value === 'custom') {
+            fromInput.style.display = 'inline-block';
+            toInput.style.display = 'inline-block';
+        } else {
+            fromInput.style.display = 'none';
+            toInput.style.display = 'none';
+        }
+    });
+
+    // 2. Fetch Data Function (AJAX)
+    async function fetchFilteredData() {
+        loader.style.display = 'flex';
+        tableWrapper.classList.add('loading-active');
+
+        const filter = filterSelect.value;
+        const agentId = agentFilter.value;
+        const from = fromInput.value;
+        const to = toInput.value;
+
+        try {
+            const url = `/sales/history?filter=${filter}&agentId=${agentId}&from=${from}&to=${to}&ajax=true`;
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.success) {
+                // Browser URL clean rakho
+                window.history.replaceState(null, '', '/sales/history');
+
+                // Stats Update
+                document.getElementById('totalBillsCount').innerText = data.history.length;
+                document.getElementById('totalRevenueText').innerText = `Rs ${data.totalRevenue.toFixed(2)}`;
+
+                // Table Rows Build karo (No partial needed)
+                let rows = '';
+                if (data.history.length === 0) {
+                    rows = '<tr><td colspan="6" class="no-data">No history found.</td></tr>';
+                } else {
+                    data.history.forEach(bill => {
+                        const billTotal = bill.salesItems.reduce((acc, item) => acc + (item.quantitySold * item.rate), 0);
+                        const date = new Date(bill.createdAt).toLocaleDateString('en-GB');
+                        const time = new Date(bill.createdAt).toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit', hour12:true});
+                        const agent = bill.agentId ? `<span class="agent-tag">${bill.agentId.name}</span>` : '<small>Direct Sale</small>';
+
+                        rows += `
+                            <tr>
+                                <td>${date} <br> <small style="color: #007bff; font-weight: bold;">${time}</small></td>
+                                <td class="customer-name">${bill.customerName}</td>
+                                <td>${bill.salesItems.length} Items</td>
+                                <td style="font-weight: bold; color: #06A56C;">Rs ${billTotal.toFixed(2)}</td>
+                                <td>${agent}</td>
+                                <td>
+                                    <button type="button" class="view-btn action-btn" data-id="${bill._id}" id="view">View</button>
+                                    <button type="button" class="delete-btn action-btn" data-id="${bill._id}" id="delete">Delete</button>
+                                </td>
+                            </tr>`;
+                    });
+                }
+                tableBody.innerHTML = rows;
             }
-        });
+        } catch (err) {
+            console.error(err);
+            alert("Error loading data.");
+        } finally {
+            loader.style.display = 'none';
+            tableWrapper.classList.remove('loading-active');
+        }
     }
 
-    // Agent filter par bhi auto-submit
-    if (agentSelect) {
-        agentSelect.addEventListener('change', () => {
-            document.getElementById('filterForm').submit();
-        });
-    }
+    // 3. Apply Button Click
+    applyBtn.addEventListener('click', fetchFilteredData);
+
+    // 4. View & Delete (Event Delegation)
+    document.addEventListener('click', async (e) => {
+        const id = e.target.getAttribute('data-id');
+        if (!id) return;
+
+        if (e.target.classList.contains('view-btn')) {
+            window.location.href = `/sales/bill/${id}`;
+        }
+
+        if (e.target.classList.contains('delete-btn')) {
+            if (confirm("⚠️ Delete this bill?")) {
+                const res = await fetch(`/sales/delete-bill/${id}`, { method: 'DELETE' });
+                const result = await res.json();
+                if (result.success) {
+                    alert("Deleted!");
+                    fetchFilteredData(); // Reload table data
+                }
+            }
+        }
+    });
 });

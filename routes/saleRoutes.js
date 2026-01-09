@@ -342,33 +342,22 @@ router.get('/print', isLoggedIn, allowRoles("admin", "worker"), async (req, res)
 ================================ */
 router.get('/history', isLoggedIn, allowRoles("admin"), async (req, res) => {
     try {
-        let { filter = 'all', agentId, from, to } = req.query;
+        let { filter = 'month', agentId, from, to, ajax } = req.query;
         let query = {};
+        const PKT_TIMEZONE = 'Asia/Karachi'; 
         const nowPKT = moment().tz(PKT_TIMEZONE);
 
-        // --- Improved Filter Logic ---
+        // Filter Logic (Wahi jo aapne di hai)
         if (filter === 'today') {
-            query.createdAt = { 
-                $gte: nowPKT.clone().startOf('day').toDate(), 
-                $lte: nowPKT.clone().endOf('day').toDate() 
-            };
+            query.createdAt = { $gte: nowPKT.clone().startOf('day').toDate(), $lte: nowPKT.clone().endOf('day').toDate() };
         } else if (filter === 'yesterday') {
             const yesterday = nowPKT.clone().subtract(1, 'days');
-            query.createdAt = { 
-                $gte: yesterday.startOf('day').toDate(), 
-                $lte: yesterday.endOf('day').toDate() 
-            };
+            query.createdAt = { $gte: yesterday.startOf('day').toDate(), $lte: yesterday.endOf('day').toDate() };
         } else if (filter === 'month') {
-            query.createdAt = { 
-                $gte: nowPKT.clone().startOf('month').toDate(), 
-                $lte: nowPKT.clone().endOf('day').toDate() 
-            };
+            query.createdAt = { $gte: nowPKT.clone().startOf('month').toDate(), $lte: nowPKT.clone().endOf('day').toDate() };
         } else if (filter === 'lastMonth') {
             const lastMonth = nowPKT.clone().subtract(1, 'months');
-            query.createdAt = { 
-                $gte: lastMonth.startOf('month').toDate(), 
-                $lte: lastMonth.endOf('month').toDate() 
-            };
+            query.createdAt = { $gte: lastMonth.startOf('month').toDate(), $lte: lastMonth.endOf('month').toDate() };
         } else if (filter === 'custom' && from && to) {
             query.createdAt = { 
                 $gte: moment.tz(from, PKT_TIMEZONE).startOf('day').toDate(), 
@@ -380,29 +369,42 @@ router.get('/history', isLoggedIn, allowRoles("admin"), async (req, res) => {
             query.agentId = agentId;
         }
 
+        // Database Query with .lean() taake population sahi se JSON mein jaye
         const history = await PrintSale.find(query)
             .populate('agentId', 'name')
             .populate('salesItems') 
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 })
+            .lean(); // 👈 Ye zaroori hai JSON performance ke liye
 
-        const agents = await Agent.find({}, 'name');
+        const agents = await Agent.find({}, 'name phone').lean();
         
         let totalRevenue = 0;
         history.forEach(bill => {
             if (bill.salesItems) {
                 bill.salesItems.forEach(item => {
-                    totalRevenue += (item.quantitySold * item.rate);
+                    totalRevenue += (item.quantitySold * (item.rate || 0));
                 });
             }
         });
+
+        if (ajax === 'true') {
+            return res.json({ 
+                success: true, 
+                history, 
+                totalRevenue,
+                count: history.length 
+            });
+        }
 
         res.render('salesHistory', { 
             history, agents, role: req.user.role, 
             filter, selectedAgent: agentId || 'all', 
             from, to, totalRevenue 
         });
+
     } catch (err) {
         console.error("❌ History Filter Error:", err);
+        if (req.query.ajax === 'true') return res.status(500).json({ success: false });
         res.status(500).send("Error loading history");
     }
 });
