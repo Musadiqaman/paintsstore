@@ -429,22 +429,36 @@ router.get('/history', isLoggedIn, allowRoles("admin"), async (req, res) => {
 ================================ */
 router.get('/bill/:id', isLoggedIn, allowRoles("admin", "worker"), async (req, res) => {
     try {
-        // Bill ko find karein aur uske items + agent ko populate karein
+        // 🟢 Optimized Population: Hum specify kar rahe hain ke SalesItems se kya kya chahiye
         const bill = await PrintSale.findById(req.params.id)
-            .populate('salesItems')
-            .populate('agentId');
+            .populate({
+                path: 'salesItems',
+                select: 'stockID saleID itemName brandName colourName qty quantitySold rate createdAt' 
+            })
+            .populate('agentId', 'name');
 
         if (!bill) return res.status(404).send("Bill not found");
 
-        // Total calculate karein display ke liye
-        const totalAmount = bill.salesItems.reduce((acc, item) => acc + (item.quantitySold * item.rate), 0);
+        // 🟢 Total calculation (Safety check ke saath)
+        const totalAmount = bill.salesItems.reduce((acc, item) => {
+            const itemRate = item.rate || 0;
+            const itemQty = item.quantitySold || 0;
+            return acc + (itemQty * itemRate);
+        }, 0);
 
-        res.render('viewBill', { bill, totalAmount, role: req.user.role });
+        // Render with all data
+        res.render('viewBill', { 
+            bill, 
+            totalAmount, 
+            role: req.user.role,
+            moment // Timezone fix ke liye moment pass karna zaroori hai
+        });
     } catch (err) {
-        console.error(err);
-        res.status(500).send("Error loading bill");
+        console.error("❌ View Bill Error:", err);
+        res.status(500).send("Error loading bill details");
     }
 });
+
 
 
 /* ================================

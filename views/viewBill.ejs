@@ -1,114 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <title>Invoice - <%= bill.customerName %></title>
-    <link rel="stylesheet" href="/stylesheets/allSales.css">
-    <style>
-        /* General Styling */
-        .invoice-box { max-width: 800px; margin: 30px auto; padding: 30px; border: 1px solid #eee; box-shadow: 0 0 10px rgba(0, 0, 0, 0.15); font-size: 16px; line-height: 24px; background: #fff; font-family: 'Helvetica', 'Arial', sans-serif; }
-        .invoice-header { display: flex; justify-content: space-between; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 20px; }
-        .invoice-header h2 { margin: 0; color: #06A56C; }
-        .bill-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        .bill-table th { background: #f8f9fa; border: 1px solid #ddd; padding: 12px; text-align: left; }
-        .bill-table td { border: 1px solid #ddd; padding: 12px; }
-        .total-section { text-align: right; font-size: 20px; font-weight: bold; margin-top: 20px; border-top: 2px solid #eee; padding-top: 10px; }
-        
-        /* Buttons Styling */
-        .no-print { margin-top: 30px; display: flex; gap: 10px; }
-        .btn-print { background: #06A56C; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; font-weight: bold; }
-        .btn-back { background: #666; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; font-weight: bold; }
+  <meta charset="UTF-8">
+  <title>View Bill | <%= bill.customerName %></title>
+  <link rel="icon" href="/images/weldon-paints-logo.png" type="image/png">
+  <link rel="stylesheet" href="/stylesheets/printSales.css">
+  <style>
+    /* ===== SCREEN ONLY STYLING (Aapka UI jesa tha wesa hi rahay ga) ===== */
+    .no-print-controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-bottom: 1px solid #ddd;
+    }
 
-        /* PRINT CSS - Image ke mutabiq thermal setup */
-        @media print {
-            .no-print, nav, .navbar { display: none !important; }
-            body { background: white; padding: 0; margin: 0; }
-            .invoice-box { 
-                max-width: 100%; width: 100%; margin: 0; padding: 10px; border: none; box-shadow: none; 
-            }
-            .invoice-header h2 { color: black; }
-            .bill-table th, .bill-table td { padding: 8px; font-size: 12px; }
-            .total-section { font-size: 16px; }
-        }
-    </style>
+    .btn {
+      padding: 8px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .btn-print { background-color: #06A56C; color: white !important; }
+    .btn-back { background-color: #6c757d; color: white !important; }
+
+    .screen-wrapper {
+      display: flex;
+      justify-content: center;
+      background-color: #e9ecef;
+      min-height: 100vh;
+      padding: 20px 0;
+    }
+
+    /* ===== PRINT LOGIC (Sirf Print ke waqt Navbar hatane ke liye) ===== */
+    @media print {
+      /* Navbar, Buttons, aur kisi bhi UI element ko zabardasti hide karna */
+      nav, 
+      .navbar, 
+      .no-print-controls, 
+      header, 
+      footer:not(.footer), 
+      aside {
+        display: none !important;
+      }
+
+      /* Body ko print ke liye reset karna taake margin ka masla na ho */
+      body {
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .screen-wrapper {
+        display: block !important;
+        background: transparent !important;
+        padding: 0 !important;
+      }
+
+      .print-area {
+        width: 76mm !important; /* Aapki original width */
+        margin: 0 !important;
+        box-shadow: none !important;
+      }
+    }
+  </style>
 </head>
+
 <body>
-    <%- include('partials/navbar') %>
+  <%- include('partials/navbar') %>
 
-    <div class="invoice-box">
-        <div class="invoice-header">
-            <div>
-                <h2>HAMZA PAINTS</h2>
-                <p>Main Bazaar, City Road <br> <strong>Software:</strong> M.SHOUKAT (0335 8004900)</p>
-            </div>
-            <div style="text-align: right;">
-                <h3>INVOICE</h3>
-                <p><strong>Date:</strong> <%= new Date(bill.createdAt).toLocaleDateString('en-GB') %></p>
-                <p><strong>Time:</strong> <%= new Date(bill.createdAt).toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit', hour12: true}) %></p>
-            </div>
+  <div class="no-print-controls">
+    <button  class="btn btn-print">🖨️ Print Invoice</button>
+    <a href="/sales/history" class="btn btn-back">🔙 Back to History</a>
+  </div>
+
+  <div class="screen-wrapper">
+    <div class="print-area">
+      <div class="shop-header">
+        <img src="/images/weldon-paints-logo.png" id="logo">
+        <div class="shop-name-en">Hamza Weldon Paint & Hardware Store</div>
+        <div class="shop-name-ur">حمزہ ویلڈن پینٹ اینڈ ہارڈویئر سٹور</div>
+        <div class="shop-phones">
+          <span dir="ltr">0319-9303154</span>(حمزہ)
+          <span dir="ltr">0332-9780911</span>(اسماعیل)
+          <span dir="ltr">0335-0502041</span>(مبارک شاہ)
         </div>
+      </div>
 
-        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-            <div>
-                <p><strong>Bill To:</strong> <%= bill.customerName %></p>
-                <p><strong>Agent:</strong> <%= bill.agentId ? bill.agentId.name : 'Direct Sale' %></p>
-            </div>
-            <div style="text-align: right;">
-                <p><strong>Bill ID:</strong> <%= bill._id %></p>
-            </div>
-        </div>
+      <br>
 
-        <table class="bill-table">
-            <thead>
-                <tr>
-                    <th>Item Details</th>
-                    <th>Qty</th>
-                    <th>Rate</th>
-                    <th>Subtotal</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% bill.salesItems.forEach(item => { %>
-                <tr>
-                    <td>
-                        <strong><%= item.itemName %></strong><br>
-                        <small><%= item.brandName %> | <%= item.colourName %> (<%= item.qty %>)</small>
-                    </td>
-                    <td><%= item.quantitySold %></td>
-                    <td>Rs <%= item.rate.toFixed(2) %></td>
-                    <td>Rs <%= (item.quantitySold * item.rate).toFixed(2) %></td>
-                </tr>
-                <% }) %>
-            </tbody>
-        </table>
+      <p><b>Customer Name:</b> <span style="text-transform: uppercase;"><%= bill.customerName %></span></p>
+      <p><b>Agent:</b> <%= bill.agentId ? bill.agentId.name : 'Direct Sale' %></p>
+      <p><b>Entry Date:</b> 
+          <%= new Date(bill.createdAt).toLocaleDateString('en-GB', {timeZone: 'Asia/Karachi'}) %> | 
+          <%= new Date(bill.createdAt).toLocaleTimeString('en-US', {timeZone: 'Asia/Karachi', hour:'2-digit', minute:'2-digit', hour12:true}) %>
+      </p>
 
-        <div class="total-section">
-            Total Items: <%= bill.salesItems.length %> | Total Amount: Rs <%= totalAmount.toFixed(2) %>
-        </div>
+      <h3>Remarks:</h3>
 
-        <div class="no-print">
-            <button id="btnPrint" class="btn-print">🖨️ Print Invoice</button>
-            <button id="btnBack" class="btn-back">🔙 Back to History</button>
-        </div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 15%;">Stock ID</th>
+            <th style="width: 15%;">Sale ID</th>
+            <th style="width: 20%;">Item</th>
+            <th style="width: 15%;">Color</th>
+            <th style="width: 10%;">Unit</th>
+            <th style="width: 5%;">Qty</th>
+            <th style="width: 10%;">Price</th>
+            <th style="width: 10%;">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% bill.salesItems.forEach(item => { %>
+          <tr>
+            <td><%= item.stockID %></td>
+            <td><%= item.saleID || '---' %></td>
+            <td><%= item.itemName %></td>
+            <td><%= item.colourName %></td>
+            <td><%= item.qty %></td>
+            <td><%= item.quantitySold %></td>
+            <td><%= item.rate.toFixed(0) %></td>
+            <td><%= (item.quantitySold * item.rate).toFixed(0) %></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+
+      <div class="footer">
+        <span>Total Items: <%= bill.salesItems.length %></span>
+        <span>Total Amount: Rs <%= totalAmount.toFixed(2) %></span>
+      </div>
+
+      <div class="urdu-footer">
+        پتہ: ملک تاج مارکیٹ، دکان نمبر 5،6 کوہاٹ بورڈ ہائی وے چوک
+      </div>
+
+      <div class="urdu-warning">.بل کے بغیر واپسی نہیں ہوگی</div>
+      <div class="thank-you-section">THANK YOU FOR VISITING HAMZA PAINTS</div>
+
+      <div class="dev-footer">
+        <span>Software Developed by: M.SHOUKAT (0335 8004900)</span>
+      </div>
     </div>
+  </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const printBtn = document.getElementById('btnPrint');
-            const backBtn = document.getElementById('btnBack');
-
-            if (printBtn) {
-                printBtn.addEventListener('click', () => {
-                    window.print();
-                });
-            }
-
-            if (backBtn) {
-                backBtn.addEventListener('click', () => {
-                    window.location.href = '/sales/history';
-                });
-            }
-        });
-    </script>
+<script src="/javascripts/viewBill.js"></script>  
 </body>
 </html>
