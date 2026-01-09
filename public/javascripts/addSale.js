@@ -226,6 +226,9 @@ function renderTable() {
 // ===============================================
 // UPDATED SUBMIT LOGIC WITH CUSTOMER NAME
 // ===============================================
+// ===============================================
+// UPDATED SUBMIT LOGIC WITH CUSTOMER NAME SAVING
+// ===============================================
 document.getElementById("submitBtn").addEventListener("click", async function () {
     const customerName = document.getElementById("customerName").value.trim();
     
@@ -243,7 +246,6 @@ document.getElementById("submitBtn").addEventListener("click", async function ()
     submitBtn.disabled = true;
     submitBtn.innerHTML = `<span class="spinner"></span> Saving Sales...`;
 
-    // Payload mein customerName shamil kiya
     const payload = { 
         customerName: customerName,
         sales: tempSales, 
@@ -262,7 +264,13 @@ document.getElementById("submitBtn").addEventListener("click", async function ()
 
         if (data.success) {
             alert("✅ Sales Saved Successfully!");
+
+            // 🟢 LOCALSTORAGE UPDATES:
+            // 1. Sales items save karein
             localStorage.setItem("lastAddedSales", JSON.stringify(tempSales));
+            // 2. Customer name bhi save karein (Naya add kiya hai)
+            localStorage.setItem("lastCustomerName", customerName);
+
             window.open(`/sales/print`, "_blank");
             location.reload(); 
         } else {

@@ -71,7 +71,12 @@
                             <td>
                                 <%= new Date(bill.createdAt).toLocaleDateString('en-GB') %> <br>
                                 <small style="color: #007bff; font-weight: bold;">
-                                    <%= new Date(bill.createdAt).toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit', hour12:true}) %>
+                            <%= new Date(bill.createdAt).toLocaleTimeString('en-US', { 
+                                 timeZone: 'Asia/Karachi', 
+                                 hour: '2-digit', 
+                                 minute: '2-digit', 
+                                 hour12: true 
+                                 }).toUpperCase() %>
                                 </small>
                             </td>
                             <td class="customer-name"><%= bill.customerName %></td>
@@ -98,3 +103,6 @@
     <script src="/javascripts/salesHistory.js"></script>
 </body>
 </html>
+
+
+

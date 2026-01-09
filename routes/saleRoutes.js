@@ -292,7 +292,6 @@ router.get("/all", isLoggedIn, allowRoles("admin"), async (req, res) => {
 
 
 
-
 /* ================================
    🟢 4️⃣ Delete Sale (DELETE)
 ================================ */
@@ -347,7 +346,7 @@ router.get('/history', isLoggedIn, allowRoles("admin"), async (req, res) => {
         const PKT_TIMEZONE = 'Asia/Karachi'; 
         const nowPKT = moment().tz(PKT_TIMEZONE);
 
-        // Filter Logic (Wahi jo aapne di hai)
+        // --- 1. Filter Logic ---
         if (filter === 'today') {
             query.createdAt = { $gte: nowPKT.clone().startOf('day').toDate(), $lte: nowPKT.clone().endOf('day').toDate() };
         } else if (filter === 'yesterday') {
@@ -369,17 +368,22 @@ router.get('/history', isLoggedIn, allowRoles("admin"), async (req, res) => {
             query.agentId = agentId;
         }
 
-        // Database Query with .lean() taake population sahi se JSON mein jaye
+        // --- 2. Database Query ---
         const history = await PrintSale.find(query)
             .populate('agentId', 'name')
             .populate('salesItems') 
             .sort({ createdAt: -1 })
-            .lean(); // 👈 Ye zaroori hai JSON performance ke liye
+            .lean(); 
 
         const agents = await Agent.find({}, 'name phone').lean();
         
+        // --- 3. Timezone Correction & Revenue Calculation ---
         let totalRevenue = 0;
         history.forEach(bill => {
+            // Vercel par date fix karne ke liye yahan format kar rahe hain
+            bill.formattedDate = moment(bill.createdAt).tz(PKT_TIMEZONE).format('DD/MM/YYYY');
+            bill.formattedTime = moment(bill.createdAt).tz(PKT_TIMEZONE).format('hh:mm A');
+
             if (bill.salesItems) {
                 bill.salesItems.forEach(item => {
                     totalRevenue += (item.quantitySold * (item.rate || 0));
@@ -387,19 +391,25 @@ router.get('/history', isLoggedIn, allowRoles("admin"), async (req, res) => {
             }
         });
 
+        // --- 4. Responses ---
         if (ajax === 'true') {
             return res.json({ 
                 success: true, 
-                history, 
+                history, // Isme ab formattedDate aur formattedTime shamil hai
                 totalRevenue,
                 count: history.length 
             });
         }
 
         res.render('salesHistory', { 
-            history, agents, role: req.user.role, 
-            filter, selectedAgent: agentId || 'all', 
-            from, to, totalRevenue 
+            history, 
+            agents, 
+            role: req.user.role, 
+            filter, 
+            selectedAgent: agentId || 'all', 
+            from, to, 
+            totalRevenue,
+            moment // EJS mein direct use karne ke liye
         });
 
     } catch (err) {
