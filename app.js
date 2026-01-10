@@ -67,26 +67,28 @@ app.use(
 // =======================================================
 // Allowed origins
 
-const allowedOrigins = process.env.NODE_ENV === "production"
-  ? ["https://paintsstore.vercel.app"]   // Add your production domain(s) here
-  : ["http://localhost:3000"];           // Localhost for dev
+// =======================================================
+// 🛡 SECURITY LAYER 3 → CORS (Vercel Friendly)
+// =======================================================
+const allowedOrigins = [
+  "https://paintsstore.vercel.app",
+  "http://localhost:3000"
+];
 
-// ===== CORS Middleware =====
 app.use(cors({
   origin: function (origin, callback) {
-    // origin null -> Postman, curl, server-side request
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true); // allowed
+    // Allow if no origin (like mobile apps/postman) or if in allowed list
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
+      callback(null, true);
+    } else {
+      callback(new Error("❌ Not allowed by CORS"));
     }
-
-    // not allowed
-    return callback(null, false);
   },
-  methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
+
+// Sakht origin check ko hata dein ya sirf development ke liye rakhein
+// Kyunke Vercel par ye aksar requests block kar deta hai
 
 // ===== Strict Origin Check =====
 app.use((req, res, next) => {
