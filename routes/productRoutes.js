@@ -1,6 +1,7 @@
 import express from 'express';
 import Product from "../models/Product.js";
 import Sale from "../models/Sale.js";
+import Item from '../models/Item.js';
 import { isLoggedIn } from "../middleware/isLoggedIn.js";
 import { allowRoles } from "../middleware/allowRoles.js";
 import moment from 'moment-timezone'; // 🟢 Library Import
@@ -249,69 +250,98 @@ res.render('refundProducts',{role});
 
 
 
-router.post('/refund',isLoggedIn,allowRoles("admin", "worker"), async (req, res) => {
+router.post('/refund', isLoggedIn, allowRoles("admin", "worker"), async (req, res) => {
   try {
     let { stockID, saleID, productQuantity } = req.body;
-
-    saleID = saleID.trim(); // 🆕 added
-
-    stockID = stockID.trim();
+    saleID = saleID ? saleID.trim() : "";
+    stockID = stockID ? stockID.trim() : "";
     productQuantity = parseInt(productQuantity);
 
     if (!stockID || !productQuantity || productQuantity <= 0) {
-      return res.status(400).send("❌ Invalid StockID or quantity");
+      return res.status(400).send("❌ Invalid Input");
     }
 
-    const sale = await Sale.findOne({ stockID, saleID }); // 🔄 changed
+    const sale = await Sale.findOne({ stockID, saleID });
     const product = await Product.findOne({ stockID });
 
     if (!sale || !product) {
       return res.status(404).send("❌ Sale or Product not found");
     }
 
-    // Maximum refundable quantity based on sale
-    const maxRefundable = sale.quantitySold - sale.refundQuantity;
+    // Maximum refundable quantity check
+    const maxRefundable = sale.quantitySold - (sale.refundQuantity || 0);
     if (productQuantity > maxRefundable) {
       return res.status(400).send(`❌ Refund quantity exceeds remaining sold quantity. Max allowed: ${maxRefundable}`);
     }
 
     const refundQty = productQuantity;
+    const refundAmount = refundQty * sale.rate;
 
-    // --- Update Sale ---
+    // --- 1. Update Sale (Profit & Qty) ---
     const purchaseRate = product.rate || 0;
     const refundProfit = parseFloat(((sale.rate - purchaseRate) * refundQty).toFixed(2));
-    sale.profit = parseFloat((sale.profit - refundProfit).toFixed(2));
-    if (sale.profit < 0) sale.profit = 0;
-    sale.refundQuantity += refundQty;
+    
+    sale.profit = Math.max(0, parseFloat((sale.profit - refundProfit).toFixed(2)));
+    sale.refundQuantity = (sale.refundQuantity || 0) + refundQty;
 
-    if (sale.refundQuantity === 0) sale.refundStatus = "Not Refunded";
-    else if (sale.refundQuantity >= sale.quantitySold) sale.refundStatus = "Fully Refunded";
-    else sale.refundStatus = "Partially Refunded";
-
+    if (sale.refundQuantity >= sale.quantitySold) {
+        sale.refundStatus = "Fully Refunded";
+    } else {
+        sale.refundStatus = "Partially Refunded";
+    }
     await sale.save();
 
-    // --- Update Product ---
+    // --- 2. Update Product (Stock & Total Refunds) ---
+    // Remaining stock wapas barhao
     product.remaining = Math.min(product.remaining + refundQty, product.totalProduct);
     
-    const allSales = await Sale.find({ stockID });
-    const totalRefundedQty = allSales.reduce((acc, s) => acc + (s.refundQuantity || 0), 0);
+    // Total product refunds track karne ke liye (Sab sales ka nichor)
+    const allSalesForThisProduct = await Sale.find({ stockID });
+    const totalRefundedQty = allSalesForThisProduct.reduce((acc, s) => acc + (s.refundQuantity || 0), 0);
+    
     product.refundQuantity = Math.min(totalRefundedQty, product.totalProduct);
 
-    if (product.refundQuantity === 0) product.refundStatus = "Not Refunded";
-    else if (product.refundQuantity >= product.totalProduct) product.refundStatus = "Fully Refunded";
-    else product.refundStatus = "Partially Refunded";
-
+    if (product.refundQuantity === 0) {
+        product.refundStatus = "none";
+    } else if (product.refundQuantity >= product.totalProduct) {
+        product.refundStatus = "Fully Refunded";
+    } else {
+        product.refundStatus = "Partially Refunded";
+    }
     await product.save();
 
-    res.send(`✅ Refund successful. ${refundQty} items returned to stock for SaleID: ${saleID}`); // 🔄 changed
+    // --- 3. ✅ Update Agent Commission ---
+    if (sale.agentItemId) {
+        const agentItem = await Item.findById(sale.agentItemId);
+        if (agentItem) {
+            // Stats minus karen
+            agentItem.totalProductSold -= refundQty;
+            agentItem.totalProductAmount -= refundAmount;
 
+            // Naya percentage amount calculate karen
+            const newCommission = (agentItem.totalProductAmount * agentItem.percentage) / 100;
+            agentItem.percentageAmount = Math.round(newCommission * 100) / 100;
+
+            // Payment status check karen
+            if (agentItem.paidAmount >= agentItem.percentageAmount) {
+                agentItem.paidStatus = "Paid";
+            } else if (agentItem.paidAmount > 0) {
+                agentItem.paidStatus = "Partial";
+            } else {
+                agentItem.paidStatus = "Unpaid";
+            }
+
+            await agentItem.save();
+        }
+    }
+
+    res.send(`✅ Refund successful. Stock updated and Agent Commission adjusted.`);
 
   } catch (err) {
-    console.error(err);
+    console.error("❌ Refund Error:", err);
     res.status(500).send("❌ Internal Server Error");
   }
 });
-
 
 
 

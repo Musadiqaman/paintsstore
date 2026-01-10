@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <td>${a.cnic }</td>
                             <td>${dateStr}<br><small style="color: #007bff; font-weight: bold;">${timeStr}</small></td>
                             <td class="action-buttons">
-                                <button id="view"><a href="/agents/view-agent/${a._id}" style="text-decoration: none; color: inherit;">View</a></button>
+                                <button id="view"><a href="/agents/view/${a._id}" style="text-decoration: none; color: inherit;">View</a></button>
                                 ${data.role === "admin" ? `<button type="button" class="delete-btn" data-id="${a._id}" id="delete" >Delete</button>` : ''}
                             </td>
                         </tr>`;

@@ -47,12 +47,8 @@ router.post("/add", isLoggedIn, allowRoles("admin", "worker"), async (req, res) 
   try {
     const { sales, agentID, percentage, customerName } = req.body;
 
-    // Validation
-    if (!customerName) {
-      return res.status(400).json({ success: false, message: "Customer name is required." });
-    }
-    if (!sales || sales.length === 0) {
-      return res.status(400).json({ success: false, message: "No sales provided." });
+    if (!customerName || !sales || sales.length === 0) {
+      return res.status(400).json({ success: false, message: "Missing data." });
     }
 
     const stockIDs = sales.map(s => s.stockID);
@@ -66,10 +62,10 @@ router.post("/add", isLoggedIn, allowRoles("admin", "worker"), async (req, res) 
 
     for (const s of sales) {
       const product = productMap.get(s.stockID);
-      if (!product) throw new Error(`Product not found: ${s.itemName}`);
-      if (s.quantitySold > product.remaining) throw new Error(`Stock low for ${s.itemName}`);
+      if (!product || s.quantitySold > product.remaining) {
+        throw new Error(`Stock error for ${s.itemName}`);
+      }
 
-      // Profit Calculation
       const profit = Math.round(((s.rate - product.rate) * s.quantitySold) * 100) / 100;
       
       salesToCreate.push({
@@ -90,33 +86,43 @@ router.post("/add", isLoggedIn, allowRoles("admin", "worker"), async (req, res) 
       totalAmountForAgent += (s.quantitySold * s.rate);
     }
 
-    // 1. Database Operations (Execute together)
+    // 1. Sales Save karen
     const savedSales = await Sale.insertMany(salesToCreate);
     await Product.bulkWrite(productUpdates);
 
-    // 2. ✅ Save to PrintSale (Sales History)
+    // 2. Bill (PrintSale) Create karen
     let dbAgent = null;
     if (agentID) {
         dbAgent = await Agent.findOne({ agentID });
     }
 
-    await PrintSale.create({
+    const savedBill = await PrintSale.create({
         customerName: customerName,
-        salesItems: savedSales.map(sale => sale._id), // Sirf IDs ka array
+        salesItems: savedSales.map(sale => sale._id),
         agentId: dbAgent ? dbAgent._id : null
     });
 
-    // 3. Agent Commission Logic
+    // 3. Agent Commission Logic & Sale Linking
     if (dbAgent && percentage > 0) {
       const percentageAmount = Math.round((totalAmountForAgent * percentage / 100) * 100) / 100;
+      
       const agentItem = await Item.create({
         agent: dbAgent._id,
+        billId: savedBill._id,
         totalProductSold: totalQuantityForAgent,
         totalProductAmount: totalAmountForAgent,
         percentage,
         percentageAmount,
         paidStatus: "Unpaid"
       });
+
+      // ✅ Har sale record mein is AgentItem ki ID save karna
+      const saleIds = savedSales.map(s => s._id);
+      await Sale.updateMany(
+        { _id: { $in: saleIds } },
+        { $set: { agentItemId: agentItem._id } }
+      );
+
       dbAgent.items.push(agentItem._id);
       await dbAgent.save();
     }
@@ -380,16 +386,22 @@ router.get('/history', isLoggedIn, allowRoles("admin","worker"), async (req, res
         // --- 3. Timezone Correction & Revenue Calculation ---
         let totalRevenue = 0;
         history.forEach(bill => {
-            // Vercel par date fix karne ke liye yahan format kar rahe hain
-            bill.formattedDate = moment(bill.createdAt).tz(PKT_TIMEZONE).format('DD/MM/YYYY');
-            bill.formattedTime = moment(bill.createdAt).tz(PKT_TIMEZONE).format('hh:mm A');
+        // 1. Timezone Fix (Moment-Timezone use karte hue)
+        bill.formattedDate = moment(bill.createdAt).tz(PKT_TIMEZONE).format('DD/MM/YYYY');
+        bill.formattedTime = moment(bill.createdAt).tz(PKT_TIMEZONE).format('hh:mm A');
 
-            if (bill.salesItems) {
-                bill.salesItems.forEach(item => {
-                    totalRevenue += (item.quantitySold * (item.rate || 0));
-                });
-            }
+         if (bill.salesItems) {
+         bill.salesItems.forEach(item => {
+            // 2. Refund Minus Logic: Revenue sirf asali sale par calculate hoga
+            // Actual Qty = Jitni bechi thi - Jitni refund hui
+            const actualQty = (item.quantitySold || 0) - (item.refundQuantity || 0);
+            const itemRate = item.rate || 0;
+
+            // Revenue mein sirf bachi hui quantity ka paisa jama hoga
+            totalRevenue += (actualQty * itemRate);
         });
+    }
+});
 
         // --- 4. Responses ---
         if (ajax === 'true') {
@@ -433,7 +445,7 @@ router.get('/bill/:id', isLoggedIn, allowRoles("admin", "worker"), async (req, r
         const bill = await PrintSale.findById(req.params.id)
             .populate({
                 path: 'salesItems',
-                select: 'stockID saleID itemName brandName colourName qty quantitySold rate createdAt' 
+                select: 'stockID saleID itemName brandName refundQuantity colourName qty quantitySold rate createdAt' 
             })
             .populate('agentId', 'name');
 
@@ -441,9 +453,10 @@ router.get('/bill/:id', isLoggedIn, allowRoles("admin", "worker"), async (req, r
 
         // 🟢 Total calculation (Safety check ke saath)
         const totalAmount = bill.salesItems.reduce((acc, item) => {
-            const itemRate = item.rate || 0;
-            const itemQty = item.quantitySold || 0;
-            return acc + (itemQty * itemRate);
+        const itemRate = item.rate || 0;
+        // Refund ko minus kar ke asali sold qty nikalna
+        const actualQty = (item.quantitySold || 0) - (item.refundQuantity || 0);
+        return acc + (actualQty * itemRate);
         }, 0);
 
         // Render with all data
