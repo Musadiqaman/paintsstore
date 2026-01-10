@@ -19,7 +19,7 @@ refundForm.addEventListener("submit", async function (e) {
 
   try {
     // Call refund API
-    const res = await fetch("/products/refund", {
+    const res = await fetch("/sales/refund", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data)
@@ -43,3 +43,4 @@ refundForm.addEventListener("submit", async function (e) {
     addButton.innerHTML = originalText;
   }
 });
+

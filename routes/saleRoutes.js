@@ -338,6 +338,110 @@ router.get('/print', isLoggedIn, allowRoles("admin", "worker"), async (req, res)
 
 
 
+
+
+router.get('/refund',isLoggedIn,allowRoles("admin", "worker"),(req,res)=>{
+const role=req.user.role;
+res.render('refundSales',{role});
+});
+
+
+
+router.post('/refund', isLoggedIn, allowRoles("admin", "worker"), async (req, res) => {
+  try {
+    let { stockID, saleID, productQuantity } = req.body;
+    saleID = saleID ? saleID.trim() : "";
+    stockID = stockID ? stockID.trim() : "";
+    productQuantity = parseInt(productQuantity);
+
+    if (!stockID || !productQuantity || productQuantity <= 0) {
+      return res.status(400).send("❌ Invalid Input");
+    }
+
+    const sale = await Sale.findOne({ stockID, saleID });
+    const product = await Product.findOne({ stockID });
+
+    if (!sale || !product) {
+      return res.status(404).send("❌ Sale or Product not found");
+    }
+
+    // Maximum refundable quantity check
+    const maxRefundable = sale.quantitySold - (sale.refundQuantity || 0);
+    if (productQuantity > maxRefundable) {
+      return res.status(400).send(`❌ Refund quantity exceeds remaining sold quantity. Max allowed: ${maxRefundable}`);
+    }
+
+    const refundQty = productQuantity;
+    const refundAmount = refundQty * sale.rate;
+
+    // --- 1. Update Sale (Profit & Qty) ---
+    const purchaseRate = product.rate || 0;
+    const refundProfit = parseFloat(((sale.rate - purchaseRate) * refundQty).toFixed(2));
+    
+    sale.profit = Math.max(0, parseFloat((sale.profit - refundProfit).toFixed(2)));
+    sale.refundQuantity = (sale.refundQuantity || 0) + refundQty;
+
+    if (sale.refundQuantity >= sale.quantitySold) {
+        sale.refundStatus = "Fully Refunded";
+    } else {
+        sale.refundStatus = "Partially Refunded";
+    }
+    await sale.save();
+
+    // --- 2. Update Product (Stock & Total Refunds) ---
+    // Remaining stock wapas barhao
+    product.remaining = Math.min(product.remaining + refundQty, product.totalProduct);
+    
+    // Total product refunds track karne ke liye (Sab sales ka nichor)
+    const allSalesForThisProduct = await Sale.find({ stockID });
+    const totalRefundedQty = allSalesForThisProduct.reduce((acc, s) => acc + (s.refundQuantity || 0), 0);
+    
+    product.refundQuantity = Math.min(totalRefundedQty, product.totalProduct);
+
+    if (product.refundQuantity === 0) {
+        product.refundStatus = "none";
+    } else if (product.refundQuantity >= product.totalProduct) {
+        product.refundStatus = "Fully Refunded";
+    } else {
+        product.refundStatus = "Partially Refunded";
+    }
+    await product.save();
+
+    // --- 3. ✅ Update Agent Commission ---
+    if (sale.agentItemId) {
+        const agentItem = await Item.findById(sale.agentItemId);
+        if (agentItem) {
+            // Stats minus karen
+            agentItem.totalProductSold -= refundQty;
+            agentItem.totalProductAmount -= refundAmount;
+
+            // Naya percentage amount calculate karen
+            const newCommission = (agentItem.totalProductAmount * agentItem.percentage) / 100;
+            agentItem.percentageAmount = Math.round(newCommission * 100) / 100;
+
+            // Payment status check karen
+            if (agentItem.paidAmount >= agentItem.percentageAmount) {
+                agentItem.paidStatus = "Paid";
+            } else if (agentItem.paidAmount > 0) {
+                agentItem.paidStatus = "Partial";
+            } else {
+                agentItem.paidStatus = "Unpaid";
+            }
+
+            await agentItem.save();
+        }
+    }
+
+    res.send(`✅ Refund successful. Stock updated and Agent Commission adjusted.`);
+
+  } catch (err) {
+    console.error("❌ Refund Error:", err);
+    res.status(500).send("❌ Internal Server Error");
+  }
+});
+
+
+
 // Sales History Page Route
 /* ================================
    🟢 3️⃣ Sales History (GET)
