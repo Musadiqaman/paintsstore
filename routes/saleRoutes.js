@@ -588,11 +588,8 @@ router.delete("/delete-bill/:id", isLoggedIn, allowRoles("admin"), async (req, r
         // 1. Bill ka data nikaalein taake pata chale isme kaunse sales items hain
         const bill = await PrintSale.findById(billId);
         if (!bill) return res.status(404).json({ success: false, message: "Bill not found" });
-
-        // 2. Is bill se linked saare individual Sales items delete karein
-        await Sale.deleteMany({ _id: { $in: bill.salesItems } });
-
-        // 3. PrintSale (History record) delete karein
+        
+        // 2. PrintSale (History record) delete karein
         await PrintSale.findByIdAndDelete(billId);
 
         res.json({ success: true, message: "Bill deleted successfully!" });

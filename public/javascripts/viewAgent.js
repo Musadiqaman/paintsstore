@@ -103,7 +103,7 @@ html += `
         <small style="color: #666;">${pkrTime}</small>
         ${billLinkHtml} </td>
     <td class="actions">
-        <button class="pay-btn" data-id="${i._id}"  id="pay" >Pay</button>
+        <button class="pay-btn" data-id="${i._id}"  id="pay"  >Pay</button>
         ${data.role === "admin" ? `<button class="delete-btn" data-id="${i._id}" id="delete" >Delete</button>` : ''}
         <div class="pay-box" id="paybox-${i._id}" style="display:none; margin-top:5px;">
             <input class="payinput" type="number" id="payInput-${i._id}" placeholder="Amount" style="width:70px">
