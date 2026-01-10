@@ -4,12 +4,12 @@ import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import { fileURLToPath } from "url";
 import cookieParser from "cookie-parser";
-import helmet from "helmet";
 import cors from "cors";
 import session from "express-session";
-// Models import (Inhe line 10 ke baad add karein)
+
+// Models import
 import Product from "./models/Product.js";
-import Agent from "./models/Agent.js"; // esko mene line 11 me add kiya hai home page me agent ki details nikalne ke liye
+import Agent from "./models/Agent.js";
 
 // Routes
 import authRoutes from "./routes/authRoutes.js";
@@ -21,7 +21,7 @@ import agentRoutes from "./routes/agentRoutes.js";
 import { isLoggedIn } from "./middleware/isLoggedIn.js";
 import { allowRoles } from "./middleware/allowRoles.js";
 
-// Load .env
+// Load .env & Connect DB
 dotenv.config();
 connectDB();
 
@@ -31,116 +31,41 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 // =======================================================
-// 🛡 SECURITY LAYER 1 → Hide Express
+// 🛡️ MIDDLEWARES (Simplified for Vercel)
 // =======================================================
 app.disable("x-powered-by");
-// =======================================================
-// 🛡 SECURITY LAYER 2 → Helmet
-// =======================================================
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      useDefaults: true,
-      directives: {
-        "script-src": [
-          "'self'",
-          "'unsafe-inline'",
-          "https://unpkg.com",
-          "https://cdn.jsdelivr.net"
-        ],
-        "style-src": [
-          "'self'",
-          "'unsafe-inline'",
-          "https://fonts.googleapis.com"
-        ],
-        "img-src": ["'self'", "data:", "https:"],
-      },
-    },
-    crossOriginEmbedderPolicy: false,
-    crossOriginOpenerPolicy: false,
-  })
-);
 
-
-// =======================================================
-// 🛡 SECURITY LAYER 3 → CORS+ORIGIN (Local + Vercel ready)
-// =======================================================
-// Allowed origins
-
-// =======================================================
-// 🛡 SECURITY LAYER 3 → CORS (Vercel Friendly)
-// =======================================================
-const allowedOrigins = [
-  "https://paintsstore.vercel.app",
-  "http://localhost:3000"
-];
-
+// CORS ko open rakha hai taake loading block na ho
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow if no origin (like mobile apps/postman) or if in allowed list
-    if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
-      callback(null, true);
-    } else {
-      callback(new Error("❌ Not allowed by CORS"));
-    }
-  },
+  origin: true,
   credentials: true
 }));
 
-// Sakht origin check ko hata dein ya sirf development ke liye rakhein
-// Kyunke Vercel par ye aksar requests block kar deta hai
-
-// ===== Strict Origin Check =====
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-
-  // Allow requests with no origin (like Postman) or allowed origins
-  if (!origin || allowedOrigins.includes(origin)) {
-    return next();
-  }
-
-  // Forbidden response
-  return res.status(403).json({
-    success: false,
-    message: "❌ Forbidden: Origin not allowed"
-  });
-});
-
-
-// =======================================================
-// 🛡 SECURITY LAYER 4 → Trust proxy (for Vercel)
-// =======================================================
-app.set("trust proxy", process.env.NODE_ENV === "production");
-// =======================================================
-// 🛡 SECURITY LAYER 5 → Parsers
-// =======================================================
+app.set("trust proxy", 1);
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 app.use(cookieParser());
 
-// =======================================================
-// 🛡 SECURITY LAYER 6 → STATIC FILES & VIEWS
-// =======================================================
+// Static Files & Views
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(express.static(path.join(__dirname, "public")));
 
-// =======================================================
-// 🛡 SESSION
-// =======================================================
+// Session Configuration
 app.use(session({
   secret: process.env.SESSION_SECRET || "defaultsecret",
   resave: false,
   saveUninitialized: false,
   cookie: {
-    maxAge: 5 * 60 * 1000, // 5 minutes
+    maxAge: 30 * 60 * 1000, // 30 minutes (Behtar experience ke liye)
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production"
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
   }
 }));
 
 // =======================================================
-// ROUTES
+// 🚀 ROUTES
 // =======================================================
 app.use("/auth", authRoutes);
 app.use("/products", productRoutes);
@@ -149,74 +74,53 @@ app.use("/agents", agentRoutes);
 
 app.get("/", (req, res) => res.redirect("/auth/login"));
 
-// app.get("/home", isLoggedIn, allowRoles("admin", "worker"), (req, res) => {
-//   const role = req.user.role;
-//   res.render("home", { role });
-// }); esko mene comment kar diya hai neeche naye code ke liye
-
-
-
-// Is code ko Line 149 se leker line no 156 tak mene past kaya eh  par paste karein (Purane /home route ki jagah)
+// Updated & Safe Home Route
 app.get("/home", isLoggedIn, allowRoles("admin", "worker"), async (req, res) => {
   try {
     const role = req.user.role;
     
-    // Sab data parallel mangwana
+    // Parallel data fetching with .lean() for speed
     const [products, agents] = await Promise.all([
-        Product.find({}),
-        Agent.find({}) // Saare agents mangwaye taaki commission plus kar sakein
+        Product.find({}).lean().catch(() => []),
+        Agent.find({}).lean().catch(() => [])
     ]);
 
+    // Sab calculation mein "|| 0" aur "Number()" use kiya hai taake crash na ho
     const stats = {
-      totalStock: products.reduce((acc, p) => acc + (p.totalProduct || 0), 0),
-      totalValue: products.reduce((acc, p) => acc + (p.totalProduct * p.rate || 0), 0),
-      totalRemaining: products.reduce((acc, p) => acc + (p.remaining || 0), 0),
-      remainingValue: products.reduce((acc, p) => acc + (p.remaining * p.rate || 0), 0),
-      totalRefundedValue: products.reduce((acc, p) => acc + (p.refundQuantity * p.rate || 0), 0),
-      activeAgents: agents.length, // Agents ki ginti
-      // Sab agents ka commission plus (+) karne ka formula
+      totalStock: products.reduce((acc, p) => acc + (Number(p.totalProduct) || 0), 0),
+      totalValue: products.reduce((acc, p) => acc + (Number(p.totalProduct || 0) * Number(p.rate || 0)), 0),
+      totalRemaining: products.reduce((acc, p) => acc + (Number(p.remaining) || 0), 0),
+      remainingValue: products.reduce((acc, p) => acc + (Number(p.remaining || 0) * Number(p.rate || 0)), 0),
+      totalRefundedValue: products.reduce((acc, p) => acc + (Number(p.refundQuantity || 0) * Number(p.rate || 0)), 0),
+      activeAgents: agents.length || 0,
       totalCommission: agents.reduce((acc, a) => acc + (Number(a.commission) || 0), 0)
     };
 
     res.render("home", { role, stats });
     
   } catch (err) {
-    console.error("Dashboard Error:", err);
-    res.status(500).send("Stats load karne mein masla aya hai.");
+    console.error("Dashboard Error:", err.message);
+    // Agar stats mein error aaye bhi, toh page crash na ho
+    res.render("home", { role: req.user.role, stats: null, error: "Stats load nahi ho sakay" });
   }
 });
-// edar tak add kaya he code ko 
-
-
 
 app.get("/navi-bar", isLoggedIn, allowRoles("admin", "worker"), (req, res) => {
-  const role = req.user.role;
-  res.render("partials/navbar", { role });
+  res.render("partials/navbar", { role: req.user.role });
 });
 
-// =======================================================
-//  404 Handler
-// =======================================================
-app.use((req, res) => {
-  res.status(404).send("❌ Page not found.");
-});
+// 404 & Error Handlers
+app.use((req, res) => res.status(404).send("❌ Page not found."));
 
-// =======================================================
-//  ERROR HANDLER
-// =======================================================
 app.use((err, req, res, next) => {
-  console.error("❌ ERROR:", err.stack);
+  console.error("❌ SERVER ERROR:", err.message);
   res.status(500).send("Internal Server Error.");
 });
 
-// =======================================================
-// SERVER
-// =======================================================
+// Server Start (Local only)
 if (process.env.NODE_ENV !== "production") {
   const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => console.log(`🚀 Local Server: http://localhost:${PORT}`));
+  app.listen(PORT, () => console.log(`🚀 Server: http://localhost:${PORT}`));
 }
 
-
 export default app;
-
