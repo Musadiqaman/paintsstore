@@ -612,4 +612,30 @@ router.delete("/delete-bill/:id", isLoggedIn, allowRoles("admin"), async (req, r
 
 
 
+// Ye script aapke purane data ko link karne ke liye hai
+router.get("/fix-old-sales", isLoggedIn, allowRoles("admin"), async (req, res) => {
+  try {
+    // 1. Saare Bills uthaein
+    const allBills = await PrintSale.find({});
+    let updatedCount = 0;
+
+    for (const bill of allBills) {
+      if (bill.salesItems && bill.salesItems.length > 0) {
+        // 2. Is Bill ke andar jitni sales hain, un sab mein billId save kar do
+        await Sale.updateMany(
+          { _id: { $in: bill.salesItems } }, 
+          { $set: { billId: bill._id } }
+        );
+        updatedCount += bill.salesItems.length;
+      }
+    }
+
+    res.send(`✅ Success! ${updatedCount} purani sales ko unke Bills ke sath link kar diya gaya hai.`);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("❌ Error fixing data: " + err.message);
+  }
+});
+
+
 export default router;
