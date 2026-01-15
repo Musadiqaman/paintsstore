@@ -168,7 +168,16 @@ router.get("/all", isLoggedIn, allowRoles("admin", "worker"), async (req, res) =
         }
 
         // --- Refund status ---
-        if (refund && refund !== "all") query.refundStatus = refund;
+     // Refund Filter Logic
+if (refund && refund !== "all") {
+    if (refund === "both") {
+        // Agar 'both' select kiya hai to Partially aur Fully dono ko dhundo
+        query.refundStatus = { $in: ["Partially Refunded", "Fully Refunded"] };
+    } else {
+        // Agar koi specific status select kiya hai (none, Partially, ya Fully)
+        query.refundStatus = refund;
+    }
+}
 
         // --- Fetch with Lean (Fast Speed) ---
         const filteredProducts = await Product.find(query).sort({ createdAt: -1 }).lean();
@@ -295,6 +304,7 @@ router.get('/reset-all-product-refunds', isLoggedIn, allowRoles("admin"), async 
     res.status(500).send("❌ Error resetting product refund data.");
   }
 });
+
 
 
 router.get('/refund',isLoggedIn,allowRoles("admin", "worker"),(req,res)=>{

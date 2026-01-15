@@ -230,7 +230,16 @@ router.get("/all", isLoggedIn, allowRoles("admin"), async (req, res) => {
         }
 
         // 🟢 Refund Filter
-        if (refund && refund !== "all") query.refundStatus = refund;
+       // Sale Refund Filter Logic
+if (refund && refund !== "all") {
+    if (refund === "both") {
+        // Dono refunded status ko filter mein shamil karein
+        query.refundStatus = { $in: ["Partially Refunded", "Fully Refunded"] };
+    } else {
+        // Normal filter (none, Partially, ya Fully)
+        query.refundStatus = refund;
+    }
+}
 
         // 🟢 Data Fetching (Optimized)
         const filteredSales = await Sale.find(query).sort({ createdAt: -1 }).lean();
