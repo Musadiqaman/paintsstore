@@ -434,7 +434,7 @@ router.post('/refund', isLoggedIn, allowRoles("admin", "worker"), async (req, re
     if (!sale.billId) {
         return res.json({ 
             success: true, 
-            message: "✅ Refund successfull, but Bill ID not found. Check and print the updated bill from history.",
+            message: "✅ Refund successfull",
             billId: null 
         });
     }
