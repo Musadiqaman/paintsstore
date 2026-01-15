@@ -270,5 +270,73 @@ router.get('/print', isLoggedIn, allowRoles("admin", "worker"), (req, res) => {
 
 
 
+// ⚠️ Warning: Ye route database ke SARE products ko update kar dega
+router.get('/reset-all-product-refunds', isLoggedIn, allowRoles("admin"), async (req, res) => {
+  try {
+    // updateMany({}) ka matlab hai ke filter empty hai, yani sab par apply hoga
+    const result = await Product.updateMany(
+      {}, 
+      { 
+        $set: { 
+          refundQuantity: 0, 
+          refundStatus: "none" 
+        } 
+      }
+    );
+
+    res.status(200).send({
+      message: "✅ All products reset successfully.",
+      matchedCount: result.matchedCount, // Kitne products mile
+      modifiedCount: result.modifiedCount // Kitne update hue
+    });
+
+  } catch (err) {
+    console.error("❌ Reset Error:", err);
+    res.status(500).send("❌ Error resetting product refund data.");
+  }
+});
+
+
+router.get('/refund',isLoggedIn,allowRoles("admin", "worker"),(req,res)=>{
+const role=req.user.role;
+res.render('refundProducts',{role});
+});
+
+
+// Agat ye file app.js mein app.use('/products', ...) ke taur par register hai
+router.post('/refund', isLoggedIn, allowRoles("admin"), async (req, res) => {
+  try {
+    let { stockID, refundQuantity } = req.body;
+    
+    // Number conversion handle karen safely
+    const qty = Number(refundQuantity);
+
+    if (!stockID || isNaN(qty) || qty <= 0) {
+      return res.status(400).send("❌ Invalid Input: Quantity must be a number");
+    }
+
+    const product = await Product.findOne({ stockID });
+    if (!product) return res.status(404).send("❌ Product not found");
+
+    if (qty > product.remaining) {
+      return res.status(400).send(`❌ Stock short! Available: ${product.remaining}`);
+    }
+
+    product.remaining -= qty;
+    product.refundQuantity = (product.refundQuantity || 0) + qty;
+    
+    // Status update
+    product.refundStatus = product.refundQuantity >= product.totalProduct ? "Fully Refunded" : "Partially Refunded";
+
+    await product.save();
+    res.send(`✅ Refund successful! ${qty} items returned.`);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("❌ Server Error");
+  }
+});
+
+
 // Use export default to export the router in ES Modules
 export default router;

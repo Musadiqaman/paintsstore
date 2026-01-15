@@ -367,6 +367,7 @@ async function updateTable() {
 
                     html += `
                     <tr>
+                        <td>${p.stockID}</td>
                         <td>${p.brandName}</td>
                         <td>${p.itemName}</td>
                         <td>${p.colourName}</td>
@@ -375,8 +376,8 @@ async function updateTable() {
                         <td>${p.remaining}</td>
                         <td>Rs ${p.rate}</td>
                         <td>Rs ${(Number(p.totalProduct || 0) * Number(p.rate || 0)).toFixed(2)}</td>
-                        <td class="refund-status" hidden >${p.refundStatus || 'none'}</td>
-                        <td class="refund-quantity" hidden>${p.refundQuantity || 0}</td>
+                        <td class="refund-status"  >${p.refundStatus || 'none'}</td>
+                        <td class="refund-quantity" >${p.refundQuantity || 0}</td>
                         <td>${dateStr}<br><small style="color: #007bff; font-weight: bold;">${timeStr}</small></td>
                         ${data.role === "admin" ? `<td><button type="button" class="delete-btn" data-id="${p._id}" id="delete" >Delete</button></td>` : ''}
                     </tr>`;

@@ -365,7 +365,7 @@ router.post('/refund', isLoggedIn, allowRoles("admin", "worker"), async (req, re
       return res.status(404).send("❌ Sale or Product not found");
     }
 
-    // Maximum refundable quantity check
+    // Maximum refundable quantity check (Sale ke mutabiq)
     const maxRefundable = sale.quantitySold - (sale.refundQuantity || 0);
     if (productQuantity > maxRefundable) {
       return res.status(400).send(`❌ Refund quantity exceeds remaining sold quantity. Max allowed: ${maxRefundable}`);
@@ -374,7 +374,7 @@ router.post('/refund', isLoggedIn, allowRoles("admin", "worker"), async (req, re
     const refundQty = productQuantity;
     const refundAmount = refundQty * sale.rate;
 
-    // --- 1. Update Sale (Profit & Qty) ---
+    // --- 1. Update Sale (Customer ko paise wapas aur record update) ---
     const purchaseRate = product.rate || 0;
     const refundProfit = parseFloat(((sale.rate - purchaseRate) * refundQty).toFixed(2));
     
@@ -388,38 +388,23 @@ router.post('/refund', isLoggedIn, allowRoles("admin", "worker"), async (req, re
     }
     await sale.save();
 
-    // --- 2. Update Product (Stock & Total Refunds) ---
-    // Remaining stock wapas barhao
-    product.remaining = Math.min(product.remaining + refundQty, product.totalProduct);
+    // --- 2. ✅ Update Product (Stock wapas barhao) ---
+    // Jab sale refund hogi, toh maal wapas 'remaining' mein add ho jayega
+    product.remaining = product.remaining + refundQty;
     
-    // Total product refunds track karne ke liye (Sab sales ka nichor)
-    const allSalesForThisProduct = await Sale.find({ stockID });
-    const totalRefundedQty = allSalesForThisProduct.reduce((acc, s) => acc + (s.refundQuantity || 0), 0);
-    
-    product.refundQuantity = Math.min(totalRefundedQty, product.totalProduct);
-
-    if (product.refundQuantity === 0) {
-        product.refundStatus = "none";
-    } else if (product.refundQuantity >= product.totalProduct) {
-        product.refundStatus = "Fully Refunded";
-    } else {
-        product.refundStatus = "Partially Refunded";
-    }
+    // Yahan product.refundQuantity update nahi kar rahe kyunki wo aap Company Refund wale page par karenge
     await product.save();
 
-    // --- 3. ✅ Update Agent Commission ---
+    // --- 3. Update Agent Commission (Minus karen kyunki sale cancel hui) ---
     if (sale.agentItemId) {
         const agentItem = await Item.findById(sale.agentItemId);
         if (agentItem) {
-            // Stats minus karen
             agentItem.totalProductSold -= refundQty;
             agentItem.totalProductAmount -= refundAmount;
 
-            // Naya percentage amount calculate karen
             const newCommission = (agentItem.totalProductAmount * agentItem.percentage) / 100;
             agentItem.percentageAmount = Math.round(newCommission * 100) / 100;
 
-            // Payment status check karen
             if (agentItem.paidAmount >= agentItem.percentageAmount) {
                 agentItem.paidStatus = "Paid";
             } else if (agentItem.paidAmount > 0) {
@@ -432,7 +417,7 @@ router.post('/refund', isLoggedIn, allowRoles("admin", "worker"), async (req, re
         }
     }
 
-    res.send(`✅ Refund successful. Stock updated and Agent Commission adjusted.`);
+    res.send(`✅ Sale Refund successful. Stock added back to inventory.`);
 
   } catch (err) {
     console.error("❌ Refund Error:", err);
